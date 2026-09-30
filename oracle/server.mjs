@@ -111,9 +111,17 @@ async function handleApi(req, res, url) {
       // injects window.ethereum, so a client that probes before checking this once tried to
       // switch the player to an EVM chain.
       cluster: CHAINLESS ? null : CLUSTER,
-      // the client needs BOTH to offer a wallet, and treats either being null as "no wallet".
-      // Public: it identifies the app to Privy, it is not a credential.
-      privyAppId: CHAINLESS ? null : (PRIVY_APP_ID || null),
+      /**
+       * Public: it identifies the app to Privy, it is not a credential.
+       *
+       * Deliberately NOT gated on a cluster. A wallet is an identity before it is a way to
+       * sign anything, and the identity is useful on its own: a connected player appears on
+       * the board as their own address instead of a per-browser guest name, which is what
+       * makes a row mean the same thing tomorrow and on another machine. Transactions are
+       * gated separately, by whether the programs are actually reachable - so a wallet
+       * connected with no cluster can do exactly what it should: identify its owner.
+       */
+      privyAppId: PRIVY_APP_ID || null,
       rpcUrl: CHAINLESS ? null : RPC_URL,
       raceStakes: RACE_STAKES_PROGRAM,
       rewardVault: REWARD_VAULT_PROGRAM,

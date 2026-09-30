@@ -33,9 +33,16 @@ let current = { ready: false, address: null, available: false };
 export function configure(cfg) {
   const privyAppId = cfg?.privyAppId || null;
   const cluster = cfg?.cluster || null;
-  // both are required. An app id with no cluster would offer a connection that could not sign
-  // anything; a cluster with no app id has no way to connect.
-  config = privyAppId && cluster ? { privyAppId, cluster, rpcUrl: cfg.rpcUrl || null } : null;
+  /**
+   * Only the app id is required. A cluster is what makes a wallet able to SIGN; it is not what
+   * makes one worth connecting. Without one, connecting still does the useful thing: the player
+   * races as their own address rather than a name this browser invented, so their row survives a
+   * cleared cache and follows them to another machine.
+   *
+   * What a wallet cannot do without a cluster is send a transaction - and nothing offers to,
+   * because the staking tabs read their own flag, not this one.
+   */
+  config = privyAppId ? { privyAppId, cluster, rpcUrl: cfg.rpcUrl || null } : null;
   current = { ...current, available: !!config };
   emit();
   return current.available;

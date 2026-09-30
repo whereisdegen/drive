@@ -155,6 +155,15 @@ export function banner() {
     lines.push('                Verified time trials, the shared board and ghosts all work.');
     lines.push('                Duels, pots and the daily prize hide themselves in the game.');
     lines.push('                To turn them on, set CLUSTER (localnet, devnet, mainnet-beta).');
+    lines.push('');
+    if (PRIVY_APP_ID) {
+      lines.push(`privy app       ${PRIVY_APP_ID}`);
+      lines.push('                Players can connect a Solana wallet and race as their own');
+      lines.push('                address instead of a per-browser guest name. They cannot sign');
+      lines.push('                anything: there is no cluster, and nothing offers to.');
+    } else {
+      lines.push('wallets         off - PRIVY_APP_ID is unset, so everyone races as a guest.');
+    }
     if (USING_DEV_KEY) {
       lines.push('');
       lines.push('                The signing key is the public development one. Harmless here:');

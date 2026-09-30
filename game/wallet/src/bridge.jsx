@@ -25,13 +25,31 @@ import { toSolanaWalletConnectors, useWallets, useSignAndSendTransaction, useSig
 
 /**
  * CAIP-2 chain ids, read out of the installed SDK rather than copied from a docs page.
- * `localnet` has no CAIP-2 id and no external wallet can reach 127.0.0.1 anyway, so it maps to
- * nothing: local development runs in guest mode, and devnet is the first cluster a wallet sees.
+ * `localnet` has no CAIP-2 id and no external wallet can reach 127.0.0.1 anyway.
  */
 const CHAIN = {
   'mainnet-beta': 'solana:5eykt4UsFv8P8NJdTREpY1vzqKqZKvdp',
   devnet: 'solana:EtWTRABZaYq6iMfeYKouRu166VU2xqa1',
   testnet: 'solana:4uhcVJyU9pJkvQyS88uRDiswHXSCkY3z',
+};
+
+/**
+ * Privy always needs a Solana chain, even when this app has none.
+ *
+ * `toSolanaWalletConnectors()` will not initialise without one, and the failure is silent in the
+ * worst way: the provider mounts, no error is logged, and `connectWallet()` simply does nothing
+ * when the player clicks. So a chain is always supplied - mainnet by default, because that is
+ * where a player's real wallet already is and reading it is harmless.
+ *
+ * This says nothing about whether the GAME will transact. That is decided separately, by the
+ * oracle's `cluster`, and with none set nothing ever offers to send anything. The chain here
+ * exists only so the connector can see the wallet.
+ */
+const DEFAULT_CHAIN = 'mainnet-beta';
+const DEFAULT_RPC = {
+  'mainnet-beta': 'https://api.mainnet-beta.solana.com',
+  devnet: 'https://api.devnet.solana.com',
+  testnet: 'https://api.testnet.solana.com',
 };
 
 /** the latest hook values, refreshed on every render of <Bridge> */
@@ -79,6 +97,32 @@ const settle = (address) => {
   if (p) p(address);
 };
 
+/** Privy renders its picker as a dialog; its presence is what "the modal opened" means. */
+const pickerIsUp = () => !!document.querySelector('[role="dialog"], dialog[open]');
+
+/**
+ * Rejects only if the picker never appears. Resolves (doing nothing) the moment it does, handing
+ * control back to the player for as long as they need.
+ */
+function watchdog(outcome, appearMs = 7000) {
+  return new Promise((resolve, reject) => {
+    const started = Date.now();
+    let settled = false;
+    outcome.then(() => { settled = true; });
+    const tick = () => {
+      if (settled || pickerIsUp()) return resolve();
+      if (Date.now() - started < appearMs) return setTimeout(tick, 200);
+      settle(null);        // release the pending promise so a retry is possible
+      reject(new Error(
+        'Privy did not open its wallet picker. The usual cause is that this origin (' +
+        location.origin + ') is not on the app\'s allowed list in the Privy dashboard - ' +
+        'check the browser console for a Content Security Policy error naming auth.privy.io.',
+      ));
+    };
+    setTimeout(tick, 200);
+  });
+}
+
 function Bridge() {
   const { ready, wallets } = useWallets();
   const { connectWallet } = useConnectWallet({
@@ -120,7 +164,10 @@ export function mount({ appId, cluster, rpcUrl, accent = '#ff5a4d' }) {
   host.id = 'privy-root';
   document.body.appendChild(host);
 
-  const chain = CHAIN[cluster] || null;
+  // the app's cluster when it has one, mainnet otherwise - see DEFAULT_CHAIN above
+  const walletCluster = CHAIN[cluster] ? cluster : DEFAULT_CHAIN;
+  const chain = CHAIN[walletCluster];
+  const endpoint = rpcUrl || DEFAULT_RPC[walletCluster];
 
   createRoot(host).render(
     <PrivyProvider
@@ -143,14 +190,14 @@ export function mount({ appId, cluster, rpcUrl, accent = '#ff5a4d' }) {
         embeddedWallets: { createOnLogin: 'off', solana: { createOnLogin: 'off' } },
         loginMethods: ['wallet'],
         externalWallets: { solana: { connectors: toSolanaWalletConnectors() } },
-        ...(rpcUrl && chain ? { solana: { rpcs: { [chain]: { rpc: rpcUrl } } } } : {}),
+        solana: { rpcs: { [chain]: { rpc: endpoint } } },
       }}
     >
       <Bridge />
     </PrivyProvider>,
   );
 
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     const api = {
       /** the connected address, base58, or null */
       get address() {
@@ -176,7 +223,16 @@ export function mount({ appId, cluster, rpcUrl, accent = '#ff5a4d' }) {
         if (pending) return null;          // one picker at a time
         const outcome = new Promise((done) => { pending = done; });
         live.connectWallet();
-        await outcome;
+
+        // Once the picker is up the player may take as long as they like - approving in a wallet
+        // extension is not a thing to time out. But if it never appears AT ALL, Privy has failed
+        // before showing anything and reports nothing, and the caller would wait for ever.
+        //
+        // The usual cause is the origin: Privy refuses to be framed by an origin that is not on
+        // its allowed list, which surfaces only as a CSP error in the console. That is a
+        // configuration mistake and it should say so rather than hang.
+        await Promise.race([outcome, watchdog(outcome)]);
+
         // read from the hook rather than trusting the callback's argument: by the time this
         // resolves, useWallets() is the authority on what is actually connected
         return api.address;
@@ -220,7 +276,28 @@ export function mount({ appId, cluster, rpcUrl, accent = '#ff5a4d' }) {
     const stop = api.onChange(({ ready }) => {
       if (!ready) return;
       stop();
+      clearTimeout(giveUp);
       resolve(api);
     });
+
+    /**
+     * Privy may never become ready, and says nothing when it does not.
+     *
+     * The common cause is the origin: its SDK loads an iframe from auth.privy.io, and that
+     * refuses to be framed by an origin missing from the app's allowed list. The only trace is a
+     * CSP error in the console; `ready` simply stays false for ever.
+     *
+     * That used to hang here, before connect() was even reached - so the caller's UI sat on
+     * "Connecting..." with nothing to go on. Failing with the likely cause named turns twenty
+     * minutes of bisecting into one line.
+     */
+    const giveUp = setTimeout(() => {
+      stop();
+      reject(new Error(
+        `Privy did not finish loading. Check that ${location.origin} is on the allowed list ` +
+        `in the Privy dashboard - if it is not, the browser console will show a Content ` +
+        `Security Policy error naming auth.privy.io.`,
+      ));
+    }, 12_000);
   });
 }

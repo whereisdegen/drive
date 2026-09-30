@@ -24,9 +24,11 @@ primary_region = "fra"
   # different thing and must never appear here: it would be readable by anyone who can see this
   # file. If server-side Privy calls are ever needed, use `fly secrets set PRIVY_APP_SECRET=...`.
   #
-  # Commented out until a cluster is set: the client needs BOTH this and CLUSTER to offer a
-  # wallet, so leaving it out keeps the hosted build drive-only.
-  # PRIVY_APP_ID = "cmuoe6gu0005g0cjgjmzswon3"
+  # A wallet is an identity before it is a way to sign: with no CLUSTER set, connecting still
+  # puts a player on the board as their own address instead of a per-browser guest name, and
+  # nothing offers to send a transaction. Every origin players actually visit must be on the
+  # app's allowed list in the Privy dashboard - both the apex and www, since both serve.
+  PRIVY_APP_ID = "cmuoe6gu0005g0cjgjmzswon3"
 
 # verified runs and their traces. Without this the leaderboard resets on every deploy.
 [mounts]
