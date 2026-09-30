@@ -1,0 +1,18 @@
+node_modules
+**/node_modules
+.git
+*.log
+docs
+oracle/data
+
+# The Rust workspace is 2 GB, almost all of it `target/`, and the image needs none of it: the
+# oracle talks to a cluster over RPC and reads only the two IDL files, which live in oracle/idl.
+solana/target
+solana/programs
+solana/Cargo.lock
+solana/Cargo.toml
+solana/tests
+
+# The wallet bundle's SOURCE and its 1.3 GB of build dependencies. Only the BUILT artifact,
+# game/vendor/wallet.js, is served - and it is committed, so the image needs no build step.
+game/wallet

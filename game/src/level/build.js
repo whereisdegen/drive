@@ -24,8 +24,9 @@
 import * as THREE from 'three';
 import { ASSET, preloadAssets, bakeStatic } from '../../assetlib.js?v=r6-20260906191941';
 import { applyMaterials as renderApplyMaterials } from '../render/materials.js?v=r6-20260906191941';
-import { expandPlacements, houseWalls, SIZES, COUNTS_EXPECTED, CYLINDER_ASSETS, NO_COLLIDER, DENSITY_ASSETS, SINK, ITEM_BOXES, BOOST_PADS, countPlacements, nearest } from './placements.js?v=r6-20260906191941';
+import { SIZES, COUNTS_EXPECTED, SINK, ITEM_BOXES, BOOST_PADS, countPlacements, nearest } from './placements.js?v=r6-20260906191941';
 import { FILLET_ASSETS, makeFillet } from './fillets.js?v=r6-20260906191941';
+import { levelPlacements, placementY, addPlacementCollider, addHouseWalls } from './colliders.js?v=r6-20260906191941';
 import { stackCrowd, makeCrowdFront, FRONT_SPECS, seedOf } from './crowdrow.js?v=r6-20260906191941';
 
 // Round 5 (targeted, crowd depth): every spectator_group is re seated as three card layers 0.3 m back and up
@@ -234,11 +235,6 @@ async function exists(url) {
     return r.ok;
   } catch (e) { return false; }
 }
-function densityKeep(index, density) {
-  if (density >= 1) return true;
-  return ((index * 0.6180339887) % 1) < density;   // deterministic golden ratio stride, no rng needed
-}
-
 export async function buildLevel(THREE_, opts) {
   const { scene, world, terrain, spline, road, tier, onProgress } = opts;
   const T = THREE_ || THREE;
@@ -250,19 +246,8 @@ export async function buildLevel(THREE_, opts) {
   const paintAt = terrain && terrain.paintAt ? (x, z) => terrain.paintAt(x, z) : () => 'grass';
   const progress = (f, label) => { if (onProgress) onProgress(Math.max(0, Math.min(1, f)), label); };
 
-  // 1. the list
-  let list = expandPlacements({ spline, road, terrain });
-  const densityIndex = new Map();
-  const runKeep = new Map();   // round 5: a crowd RUN is kept or dropped whole (every second card of a run exposed every cut edge on the phone tier)
-  list = list.filter((p) => {
-    if (!DENSITY_ASSETS.has(p.asset)) return true;
-    if (p.asset === 'spectator_group' && p.run !== undefined) {
-      if (!runKeep.has(p.run)) { const i = densityIndex.get('crowd_run') || 0; densityIndex.set('crowd_run', i + 1); runKeep.set(p.run, densityKeep(i, density)); }
-      return runKeep.get(p.run);
-    }
-    const i = densityIndex.get(p.asset) || 0; densityIndex.set(p.asset, i + 1);
-    return densityKeep(i, density);
-  });
+  // 1. the list (shared with src/level/colliders.js, which the verification oracle builds from)
+  const list = levelPlacements({ spline, road, terrain, density });
   const names = [...new Set(list.map((p) => p.asset))].sort();
 
   // 2. which assets have landed
@@ -293,69 +278,7 @@ export async function buildLevel(THREE_, opts) {
     if (!g) { g = new T.Group(); g.name = 'block_' + key; blockGroups.set(key, g); blockNames.set(key, new Set()); blockBoxes.set(key, new T.Box3()); }
     return g;
   };
-  const addCollider = (p, size, y) => {
-    if (!world || NO_COLLIDER.has(p.asset) || p.moving) return;
-    const [w, d, h] = size;
-    const yaw = p.rot * DEG2RAD;
-    if (p.asset === 'rock_tunnel') {
-      // the tunnel collides as two side walls with the 12 m opening cut out (clear 12 of the 20 m width)
-      if (world.addBox) {
-        const c = Math.cos(yaw), s = Math.sin(yaw);
-        for (const side of [-1, 1]) {
-          const lx = side * 8, cx = p.x + lx * c, cz = p.z - lx * s;
-          world.addBox(new T.Vector3(cx, y + h / 2, cz), new T.Vector3(4, h, d), yaw, 'tunnel'); colliders++;
-        }
-      }
-      return;
-    }
-    // Round 1 (fix, level): every collider that stands ON a drivable margin (the pavement, the quay strip, the
-    // lay by) is a cylinder or a chain of cylinders, never a box. The World slides a kart along a face, but a
-    // face square to the travel direction has no tangent to slide along, so a kart riding the pavement was
-    // pinned by the start gantry's east leg, the gate piers, the market tyre walls and the quay davit (gate
-    // runs: 0 to 8 stalls, 15 s against the davit). A round contact deflects: the kart rolls off to one side.
-    const cyl = (cx, cz, r, hh, tag) => { world.addCylinder(new T.Vector3(cx, y + hh / 2, cz), r, hh, tag); colliders++; };
-    const c = Math.cos(yaw), s = Math.sin(yaw);
-    const local = (lx, lz) => [p.x + lx * c + lz * s, p.z - lx * s + lz * c];   // local (x, z) to world for this placement
-    if (p.asset === 'start_gantry' || p.asset === 'lap_arch' || p.asset === 'town_gate_arch') {
-      // arches collide by their piers only, each a cylinder that covers the square pier's corners
-      if (world.addCylinder) {
-        const pier = p.asset === 'start_gantry' ? 1.2 : p.asset === 'lap_arch' ? 0.8 : 1.75;
-        for (const side of [-1, 1]) {
-          const [cx, cz] = local(side * (w / 2 - pier / 2), 0);
-          cyl(cx, cz, pier * 0.72, h, p.tag);
-        }
-      }
-      return;
-    }
-    if (p.asset === 'tyre_wall' && world.addCylinder) {
-      // a capsule: three cylinders along the long axis, so the END of a tyre wall is round and a kart that
-      // runs along the kerb line into it slides round instead of stopping dead against a 0.7 m flat end
-      for (const lx of [-0.62, 0, 0.62]) { const [cx, cz] = local(lx, 0); cyl(cx, cz, 0.42, h, p.tag); }
-      return;
-    }
-    if (p.asset === 'harbour_davit' && world.addCylinder) {
-      // the pedestal only (0.6 m square at the base); the jib reaches out 2.8 m at 3.4 m, above a driver's helmet
-      cyl(p.x, p.z, 0.5, h, p.tag);
-      return;
-    }
-    if ((p.asset === 'pit_toolcart' || p.asset === 'produce_crate_stack') && world.addCylinder) {
-      cyl(p.x, p.z, Math.max(w, d) / 2 * 0.95, h, p.tag);
-      return;
-    }
-    if (p.asset === 'quay_edge_module' && world.addBox) {
-      // round 3 (integrator): the modules moved from the deck to the water line (level, item 5), which put the top of this 1.6 m
-      // collider AT deck level and the harbour straight lost its barrier: both final gate runs fell into the harbour 5 s after GO.
-      // The box stands on the deck (0.2 m under to 1.4 m over it) whatever the module's y; the coping is drawn where the level put it
-      world.addBox(new T.Vector3(p.x, y + h + 0.4, p.z), new T.Vector3(w, h, d), yaw, p.tag); colliders++;
-      return;
-    }
-    if (CYLINDER_ASSETS.has(p.asset) && world.addCylinder) {
-      const r = p.asset === 'clock_tower' || p.asset === 'lighthouse' || p.asset === 'fountain' ? Math.min(w, d) / 2 : Math.min(w, d) / 2 * 0.5;
-      world.addCylinder(new T.Vector3(p.x, y + h / 2, p.z), Math.max(0.12, r), h, p.tag); colliders++;   // geometric centre, as addBox
-    } else if (world.addBox) {
-      world.addBox(new T.Vector3(p.x, y + h / 2, p.z), new T.Vector3(w, h, d), yaw, p.tag); colliders++;
-    }
-  };
+  const addCollider = (p, size, y) => { colliders += addPlacementCollider(T, world, p, size, y); };
 
   // far copies: desktop tier only (the phone tier passes the triangle budget at 950k and its memory is the scarcer
   // resource); ?far=0 switches them off for the A/B, ?far=N forces tier N at every distance
@@ -401,10 +324,7 @@ export async function buildLevel(THREE_, opts) {
     }
     emptyChecked.add(p.asset);
     // height
-    const px = p.probe ? p.probe[0] : p.x, pz = p.probe ? p.probe[1] : p.z;
-    let y;
-    if (typeof p.y === 'number') y = p.y;
-    else y = heightAt(px, pz) + (p.lift || 0) + (p.dy || 0) - SINK;
+    const y = placementY(p, heightAt);
     place(obj, p, y);
     if (p.asset === 'spectator_group' && crowdStack && stackCrowd(T, obj, seedOf(p.x, p.z), p.end || 0)) stacked++;
     counts.set(p.asset, (counts.get(p.asset) || 0) + 1);
@@ -469,13 +389,7 @@ export async function buildLevel(THREE_, opts) {
   if (stacked || frontRows) console.log(`[level] crowd depth: ${stacked} spectator groups layered (per layer size 0.9 to 1.1 and mirror; a flat three card asset is re seated 0.3 m back and up per layer), ${frontRows} modelled front rows with ${frontFigures} figures`);
 
   // 4. house front walls as continuous collision segments
-  if (world && world.addWallSegment) {
-    for (const wsg of houseWalls()) {
-      const a = new T.Vector3(wsg.a[0], heightAt(wsg.a[0], wsg.a[1]), wsg.a[1]);
-      const b = new T.Vector3(wsg.b[0], heightAt(wsg.b[0], wsg.b[1]), wsg.b[1]);
-      world.addWallSegment(a, b, wsg.height, 'house_' + wsg.tag); colliders++;
-    }
-  }
+  colliders += addHouseWalls(T, world, heightAt);
 
   // 5a. hybrid granularity: move every light bucket mesh (world transform kept) from its 30 m cell group
   // into the 90 m block group, so the heavy buckets cull finely and the light ones do not multiply draws

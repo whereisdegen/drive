@@ -1,0 +1,23 @@
+{
+  "name": "drive-onchain",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "DRIVE with on-chain, replay-verified time trials",
+  "workspaces": [
+    "oracle"
+  ],
+  "scripts": {
+    "start": "npm --workspace drive-oracle run start",
+    "test": "npm --workspace drive-oracle run test",
+    "mathprobe": "npm --workspace drive-oracle run mathprobe",
+    "wallet": "npm --prefix game/wallet run build",
+    "settle": "npm --workspace drive-oracle run settle"
+  },
+  "comments": {
+    "three": "declared HERE, not in oracle/, because game/src/**/*.js import it by bare specifier and Node resolves that by walking up from the importing file - it would never find oracle/node_modules."
+  },
+  "dependencies": {
+    "three": "^0.169.0"
+  }
+}

@@ -1,0 +1,1001 @@
+{
+  "address": "7qLUeC98XAYMvCZybUK9e5vHGXd2u2JfCFTH4MFXSfoH",
+  "metadata": {
+    "name": "reward_vault",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "The daily prize for the five fastest drivers"
+  },
+  "instructions": [
+    {
+      "name": "accept_authority",
+      "discriminator": [
+        107,
+        86,
+        198,
+        91,
+        33,
+        12,
+        107,
+        160
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "next_authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "claim",
+      "discriminator": [
+        62,
+        198,
+        214,
+        193,
+        213,
+        159,
+        108,
+        210
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "winner",
+          "signer": true
+        },
+        {
+          "name": "reward_mint"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "day_result",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  121
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "day"
+              }
+            ]
+          }
+        },
+        {
+          "name": "winner_token",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "day",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "fund",
+      "docs": [
+        "Optional. A plain transfer to the vault funds the pool just as well; this only exists so",
+        "a deposit is visible as an event."
+      ],
+      "discriminator": [
+        218,
+        188,
+        111,
+        221,
+        152,
+        113,
+        174,
+        7
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "funder",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "reward_mint"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "from",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "amount",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "reward_mint"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "oracle",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "set_oracle",
+      "discriminator": [
+        186,
+        128,
+        81,
+        104,
+        74,
+        79,
+        18,
+        224
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "oracle",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "settle_day",
+      "docs": [
+        "Settle a finished UTC day against the oracle's signed standings. Permissionless: the",
+        "signature is what makes it authoritative, not the caller."
+      ],
+      "discriminator": [
+        132,
+        99,
+        7,
+        227,
+        59,
+        221,
+        234,
+        58
+      ],
+      "accounts": [
+        {
+          "name": "payer",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "day_result",
+          "docs": [
+            "`init` is the \"already settled\" check: a second settlement cannot be constructed"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  121
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "day"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ix_sysvar"
+        }
+      ],
+      "args": [
+        {
+          "name": "day",
+          "type": "u64"
+        },
+        {
+          "name": "result",
+          "type": {
+            "defined": {
+              "name": "DayResult"
+            }
+          }
+        },
+        {
+          "name": "ed25519_ix_index",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "sweep_expired",
+      "docs": [
+        "After the claim window, anything unclaimed goes back into the pool and becomes part of a",
+        "future day's prize. Permissionless; it takes nothing for the caller."
+      ],
+      "discriminator": [
+        10,
+        72,
+        70,
+        57,
+        62,
+        128,
+        19,
+        22
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "day_result",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  97,
+                  121
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "day"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "day",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "transfer_authority",
+      "discriminator": [
+        48,
+        169,
+        76,
+        72,
+        229,
+        180,
+        55,
+        161
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "next",
+          "type": "pubkey"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "DayResultAccount",
+      "discriminator": [
+        105,
+        60,
+        32,
+        82,
+        88,
+        29,
+        130,
+        125
+      ]
+    },
+    {
+      "name": "VaultConfig",
+      "discriminator": [
+        99,
+        86,
+        43,
+        216,
+        184,
+        102,
+        119,
+        77
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "Claimed",
+      "discriminator": [
+        217,
+        192,
+        123,
+        72,
+        108,
+        150,
+        248,
+        33
+      ]
+    },
+    {
+      "name": "DaySettled",
+      "discriminator": [
+        179,
+        176,
+        146,
+        234,
+        38,
+        217,
+        214,
+        21
+      ]
+    },
+    {
+      "name": "Expired",
+      "discriminator": [
+        197,
+        227,
+        104,
+        103,
+        133,
+        50,
+        207,
+        161
+      ]
+    },
+    {
+      "name": "Funded",
+      "discriminator": [
+        67,
+        84,
+        56,
+        88,
+        192,
+        12,
+        201,
+        177
+      ]
+    },
+    {
+      "name": "PrizeAwarded",
+      "discriminator": [
+        156,
+        69,
+        186,
+        234,
+        187,
+        246,
+        27,
+        89
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "WrongSysvar",
+      "msg": "the instructions sysvar was not supplied"
+    },
+    {
+      "code": 6001,
+      "name": "MissingEd25519Ix",
+      "msg": "no Ed25519 instruction at the given index"
+    },
+    {
+      "code": 6002,
+      "name": "NotEd25519Program",
+      "msg": "that instruction is not the Ed25519 native program"
+    },
+    {
+      "code": 6003,
+      "name": "MalformedEd25519Ix",
+      "msg": "the Ed25519 instruction is malformed or carries more than one signature"
+    },
+    {
+      "code": 6004,
+      "name": "WrongOracleKey",
+      "msg": "signed by a key that is not this program's oracle"
+    },
+    {
+      "code": 6005,
+      "name": "MessageMismatch",
+      "msg": "the signature is over a different message than the one presented"
+    },
+    {
+      "code": 6006,
+      "name": "ResultExpired",
+      "msg": "that result has expired"
+    },
+    {
+      "code": 6007,
+      "name": "AlreadySettled",
+      "msg": "this day is already settled"
+    },
+    {
+      "code": 6008,
+      "name": "DayNotOver",
+      "msg": "the day is not over yet"
+    },
+    {
+      "code": 6009,
+      "name": "NoWinners",
+      "msg": "no winners were given"
+    },
+    {
+      "code": 6010,
+      "name": "TooManyWinners",
+      "msg": "more winners than there are places"
+    },
+    {
+      "code": 6011,
+      "name": "LengthMismatch",
+      "msg": "the winner and time lists are different lengths"
+    },
+    {
+      "code": 6012,
+      "name": "DuplicateWinner",
+      "msg": "the same address appears twice"
+    },
+    {
+      "code": 6013,
+      "name": "NotSettled",
+      "msg": "this day has not been settled"
+    },
+    {
+      "code": 6014,
+      "name": "NotAWinner",
+      "msg": "you did not place on this day"
+    },
+    {
+      "code": 6015,
+      "name": "AlreadyClaimed",
+      "msg": "already claimed"
+    },
+    {
+      "code": 6016,
+      "name": "ClaimWindowClosed",
+      "msg": "the 90 day claim window has closed"
+    },
+    {
+      "code": 6017,
+      "name": "ClaimWindowOpen",
+      "msg": "the claim window is still open"
+    },
+    {
+      "code": 6018,
+      "name": "NothingToPay",
+      "msg": "there is nothing to pay"
+    },
+    {
+      "code": 6019,
+      "name": "WrongMint",
+      "msg": "the wrong mint for this vault"
+    },
+    {
+      "code": 6020,
+      "name": "Overflow",
+      "msg": "arithmetic overflow"
+    },
+    {
+      "code": 6021,
+      "name": "NotAuthority",
+      "msg": "not the authority"
+    }
+  ],
+  "types": [
+    {
+      "name": "Claimed",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "day",
+            "type": "u64"
+          },
+          {
+            "name": "winner",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DayResult",
+      "docs": [
+        "One day's standings, fastest first."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "day",
+            "docs": [
+              "unix day index: floor(timestamp / 86400), so days are UTC by construction on both sides"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "winners",
+            "docs": [
+              "rank order, at most PLACES, no repeats"
+            ],
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "times_ms",
+            "docs": [
+              "the verified times behind the ranking, for the record"
+            ],
+            "type": {
+              "vec": "u32"
+            }
+          },
+          {
+            "name": "deadline",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DayResultAccount",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "day",
+            "type": "u64"
+          },
+          {
+            "name": "settled",
+            "type": "bool"
+          },
+          {
+            "name": "settled_at",
+            "type": "i64"
+          },
+          {
+            "name": "expires_at",
+            "type": "i64"
+          },
+          {
+            "name": "allocated",
+            "type": "u64"
+          },
+          {
+            "name": "winners",
+            "type": {
+              "vec": "pubkey"
+            }
+          },
+          {
+            "name": "amounts",
+            "type": {
+              "vec": "u64"
+            }
+          },
+          {
+            "name": "claimed",
+            "type": {
+              "vec": "bool"
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DaySettled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "day",
+            "type": "u64"
+          },
+          {
+            "name": "pool",
+            "type": "u64"
+          },
+          {
+            "name": "allocated",
+            "type": "u64"
+          },
+          {
+            "name": "expires_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Expired",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "day",
+            "type": "u64"
+          },
+          {
+            "name": "returned",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Funded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "from",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PrizeAwarded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "day",
+            "type": "u64"
+          },
+          {
+            "name": "winner",
+            "type": "pubkey"
+          },
+          {
+            "name": "place",
+            "type": "u8"
+          },
+          {
+            "name": "time_ms",
+            "type": "u32"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "VaultConfig",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "pending_authority",
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "oracle",
+            "type": "pubkey"
+          },
+          {
+            "name": "reward_mint",
+            "type": "pubkey"
+          },
+          {
+            "name": "owed",
+            "docs": [
+              "allocated to winners and not yet claimed; never part of the pool"
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "vault_bump",
+            "type": "u8"
+          }
+        ]
+      }
+    }
+  ]
+}

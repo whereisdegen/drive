@@ -1,0 +1,14 @@
+node_modules/
+**/node_modules/
+oracle/data/
+.DS_Store
+*.log
+
+# the anchor build: 2 GB of it, all reproducible from the programs
+solana/target/
+solana/.anchor/
+# keypair files, wherever anyone happens to drop one
+*-keypair.json
+id.json
+.env
+.env.local

@@ -1,0 +1,55 @@
+# DRIVE on Fly.io.  fly launch --no-deploy  then  fly deploy
+#
+# ONE machine, deliberately. oracle/store.mjs is a single-process file store: a JSON index plus
+# one file per run, guarded by an in-process write queue. Two machines over one volume would
+# corrupt the index, and Fly volumes cannot be shared anyway. If this ever needs to scale out,
+# the store has to become a database first.
+
+app = "drive-sorrel-cove"
+primary_region = "fra"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  HOST = "0.0.0.0"
+  PORT = "8712"
+  # Fly's router sets X-Forwarded-For. Without this every player behind it shares one
+  # rate-limit allowance and the team locks each other out after twenty runs between them.
+  TRUST_PROXY = "1"
+  # so the address the server prints is the one people actually open
+  PUBLIC_URL = "https://tensorace.com"
+  # Privy application id. PUBLIC - it identifies the app to Privy and is embedded in every client
+  # that loads the wallet bundle, like a Stripe publishable key. The Privy APP SECRET is a
+  # different thing and must never appear here: it would be readable by anyone who can see this
+  # file. If server-side Privy calls are ever needed, use `fly secrets set PRIVY_APP_SECRET=...`.
+  #
+  # Commented out until a cluster is set: the client needs BOTH this and CLUSTER to offer a
+  # wallet, so leaving it out keeps the hosted build drive-only.
+  # PRIVY_APP_ID = "cmuoe6gu0005g0cjgjmzswon3"
+
+# verified runs and their traces. Without this the leaderboard resets on every deploy.
+[mounts]
+  source = "drive_data"
+  destination = "/app/oracle/data"
+
+[http_service]
+  internal_port = 8712
+  force_https = true
+  auto_stop_machines = false      # a cold start rebuilds the collision world; keep it warm
+  auto_start_machines = true
+  min_machines_running = 1
+  max_machines_running = 1        # see the note at the top
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "20s"
+    method = "GET"
+    path = "/api/health"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  # measured: 109 MB idle, 241 MB peak while building the track and replaying a run.
+  # 256 would sit on the edge of the OOM killer during a verification.
+  memory = "512mb"

@@ -16,6 +16,10 @@
  *     y(lateral) = y - lateral * tan(bank).
  */
 import * as THREE from 'three';
+// Deterministic transcendentals, not the host's: Math.sin/cos/tan/atan2/pow/exp are not
+// specified to the last bit by ECMAScript and Chrome and Node genuinely disagree, which over a
+// 15 000 tick race is the difference between two cars. See src/token/detmath.js.
+import { datan2, dhypot, dtan } from '../token/detmath.js?v=r6-20260906191941';
 
 const SECTION_NAMES = {
   A: 'A harbour straight', B: 'B market corner', C: 'C lower street', D: 'D church hairpin',
@@ -93,7 +97,7 @@ export class Spline {
       for (let k = 1; k <= FINE; k++) {
         const t = k / FINE;
         const x = cr(p0.x, p1.x, p2.x, p3.x, t), z = cr(p0.z, p1.z, p2.z, p3.z, t);
-        acc += Math.hypot(x - px, z - pz);
+        acc += dhypot(x - px, z - pz);
         cum[k] = acc; px = x; pz = z;
       }
       segLen[i] = acc; fineS.push(cum); total += acc;
@@ -128,7 +132,7 @@ export class Spline {
       const bank = cr(p0.bank, p1.bank, p2.bank, p3.bank, t);
       let dx = crd(p0.x, p1.x, p2.x, p3.x, t), dz = crd(p0.z, p1.z, p2.z, p3.z, t);
       const dy = crd(p0.y, p1.y, p2.y, p3.y, t);
-      const dl = Math.hypot(dx, dz) || 1;
+      const dl = dhypot(dx, dz) || 1;
       const tx = dx / dl, tz = dz / dl;
       const section = p1.section;
       rows[r] = {
@@ -142,7 +146,7 @@ export class Spline {
     const raw = new Float64Array(N);
     for (let r = 0; r < N; r++) {
       const a = rows[mod(r - 1, N)], b = rows[mod(r + 1, N)];
-      raw[r] = wrapAngle(Math.atan2(b.tz, b.tx) - Math.atan2(a.tz, a.tx)) / (2 * ds);
+      raw[r] = wrapAngle(datan2(b.tz, b.tx) - datan2(a.tz, a.tx)) / (2 * ds);
     }
     for (let r = 0; r < N; r++) {
       let acc = 0;
@@ -178,7 +182,7 @@ export class Spline {
     out.s = s; out.progress = s / L; out.index = f < 0.5 ? i0 : i1;
     out.x = a.x + (b.x - a.x) * f; out.y = a.y + (b.y - a.y) * f; out.z = a.z + (b.z - a.z) * f;
     let tx = a.tx + (b.tx - a.tx) * f, tz = a.tz + (b.tz - a.tz) * f;
-    const tl = Math.hypot(tx, tz) || 1; tx /= tl; tz /= tl;
+    const tl = dhypot(tx, tz) || 1; tx /= tl; tz /= tl;
     out.tx = tx; out.tz = tz; out.nx = -tz; out.nz = tx;
     out.grade = a.grade + (b.grade - a.grade) * f;
     out.width = a.width + (b.width - a.width) * f;
@@ -269,7 +273,7 @@ export class Spline {
     const q = this.at(progress01, this._p || (this._p = {}));
     const h = q.width / 2;
     const lb = lateral < -h ? -h : lateral > h ? h : lateral;
-    out.set(q.x + q.nx * lateral, q.y - lb * Math.tan(q.bank * Math.PI / 180), q.z + q.nz * lateral);
+    out.set(q.x + q.nx * lateral, q.y - lb * dtan(q.bank * Math.PI / 180), q.z + q.nz * lateral);
     return out;
   }
 
@@ -285,7 +289,7 @@ export class Spline {
     return Spline.normalOf(q, out);
   }
   static normalOf(q, out = new THREE.Vector3()) {
-    const tb = Math.tan(q.bank * Math.PI / 180);
+    const tb = dtan(q.bank * Math.PI / 180);
     const t = _tv.set(q.tx, q.grade, q.tz).normalize();
     const rgt = _rv.set(q.nx, -tb, q.nz).normalize();
     return out.crossVectors(rgt, t).normalize();
@@ -298,7 +302,7 @@ export class Spline {
     const h = q.width / 2;
     if (Math.abs(n.lateral) > h + 2) return NaN;
     const lb = n.lateral < -h ? -h : n.lateral > h ? h : n.lateral;
-    return q.y - lb * Math.tan(q.bank * Math.PI / 180);
+    return q.y - lb * dtan(q.bank * Math.PI / 180);
   }
 
   /** True when s lies in [sOf(wpA), sOf(wpB)) (waypoint indices; wpB may be 59 = the lap end). */

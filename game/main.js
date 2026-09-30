@@ -346,6 +346,7 @@ async function boot() {
     finish() { return race.debugFinishPlayer(); },
     race, items, level, bodies, views, rig, sky, sea, world, spline, tier, events, audio, post, chase, scene, camera, renderer, terrain, road, smoke,
     player, input, touch, director, ais, hud, screens,
+    get tokens() { return tokens; },
   };
   function dropNow() {
     // over the cliff edge at the second guard wall gap (section H, progress 0.838): the kart is placed 3 m
@@ -363,6 +364,41 @@ async function boot() {
     playerBody.state = 'race';
     playerBody.vel.set(vx, 0, vz);
     chase.snapTo(playerBody);
+  }
+
+  // ------------------------------------------------------------------ the staking layer
+  // Optional and self-contained: if the oracle is unreachable this returns null and the game
+  // below carries on exactly as it did before any of it existed.
+  let tokens = null;
+  const itemVis = new Map();   // item-system groups hidden for the duration of a staked run
+  try {
+    // imported dynamically on purpose: the token layer reaches for an oracle, and neither that
+    // nor anything it loads is allowed to be able to stop the game from booting
+    const { installTokens } = await import('./src/token/index.js?v=r6-20260906191941');
+    tokens = await installTokens({
+      THREE, world, spline, road, terrain, scene, playerBody, views, input, touch, tier,
+      laps: LAPS, hud, KartBody, Race, Player, KartView, GRID, START_PROGRESS, CHECKPOINTS,
+      onTrialStart: () => {
+        // a staked run is solo and item-free: park the field and every item object out of sight
+        // rather than leave seven frozen karts on the grid and boxes that cannot be collected
+        for (const b of bodies) if (b !== playerBody) { const v = views.get(b.id); if (v) v.object.visible = false; }
+        itemVis.clear();
+        scene.traverse((o) => {
+          if (typeof o.name === 'string' && o.name.startsWith('items:')) { itemVis.set(o, o.visible); o.visible = false; }
+        });
+        setPaused(false);
+        screens.hideAll();
+        started = true;      // the start screen is done with; the trial owns the sim now
+      },
+      onTrialEnd: () => {
+        for (const b of bodies) if (b !== playerBody) { const v = views.get(b.id); if (v) v.object.visible = true; }
+        // put each pool back exactly as it was: an idle pool draws nothing and owns that flag itself
+        for (const [o, v] of itemVis) o.visible = v;
+        itemVis.clear();
+      },
+    });
+  } catch (e) {
+    console.warn('[game] staking layer failed to install:', e);
   }
 
   mark('ready');
@@ -463,7 +499,13 @@ async function boot() {
     if (input.pause) { if (started && race.state !== 'finished') setPaused(!paused); }
     if (input.start && !started && screens.start.classList.contains('on')) startRace();
 
+    const trialOn = !!(tokens && tokens.active);
     if (!paused) {
+      if (trialOn) {
+        // a staked run steps at a fixed 100 Hz off the REAL elapsed time, not the clamped dt,
+        // so the same inputs produce the same clock here and on the oracle
+        tokens.advance(realDt);
+      } else {
       if (started) {
         player.update(dt);
         aiCtx.time += dt; aiCtx.countdown = race.countdown;
@@ -478,6 +520,8 @@ async function boot() {
         if (dropAt < 0) dropAt = race.time + 1.5;
         else if (race.time >= dropAt) { dropArmed = false; dropNow(); }
       }
+      }
+      if (trialOn) tokens.updateViews(dt);
       for (const b of bodies) { const v = views.get(b.id); if (v) v.update(dt, b); }
       for (const m of level.movers) m.update(dt);
       chase.update(dt, playerBody);
@@ -498,14 +542,15 @@ async function boot() {
     post.setSpeedLines(lines);
     post.render(dt);
 
-    // HUD and minimap
-    const rec = race.record(PLAYER.id);
+    // HUD and minimap - a staked run has its own Race, and it is the one on the clock
+    const live = trialOn ? tokens.race : race;
+    const rec = live.record(PLAYER.id);
     hud.update({
-      position: rec ? rec.position : 8, lap: race.state === 'racing' || race.state === 'finished' ? (rec ? rec.lap : 1) : 1, laps_total: LAPS,
-      race_time: race.time, best_lap: rec && rec.bestLap !== null ? rec.bestLap : null,
-      item: items.held.get(PLAYER.id) || null, boost: boostVis,
+      position: trialOn ? 1 : (rec ? rec.position : 8), lap: live.state === 'racing' || live.state === 'finished' ? (rec ? rec.lap : 1) : 1, laps_total: LAPS,
+      race_time: live.time, best_lap: rec && rec.bestLap !== null ? rec.bestLap : null,
+      item: trialOn ? null : (items.held.get(PLAYER.id) || null), boost: boostVis,
     });
-    if (race.wrongWay(PLAYER.id)) { wrongWayT -= dt; if (wrongWayT <= 0) { hud.banner('WRONG WAY'); wrongWayT = 1.6; } } else wrongWayT = 0;
+    if (live.wrongWay(PLAYER.id)) { wrongWayT -= dt; if (wrongWayT <= 0) { hud.banner('WRONG WAY'); wrongWayT = 1.6; } } else wrongWayT = 0;
     for (let i = 0; i < bodies.length; i++) { racerRows[i].x = bodies[i].pos.x; racerRows[i].z = bodies[i].pos.z; }
     minimap.update(racerRows);
 

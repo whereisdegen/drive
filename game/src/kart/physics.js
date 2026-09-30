@@ -35,9 +35,13 @@
  * lap already leaves the road at two corners).
  */
 import * as THREE from 'three';
+// Deterministic transcendentals, not the host's: Math.sin/cos/tan/atan2/pow/exp are not
+// specified to the last bit by ECMAScript and Chrome and Node genuinely disagree, which over a
+// 15 000 tick race is the difference between two cars. See src/token/detmath.js.
+import { datan2, dcos, dexp, dhypot, dpow, dsin } from '../token/detmath.js?v=r6-20260906191941';
 
 export const KART = {
-  vmax: 24, accel: (v) => 12 * Math.pow(Math.max(0, 1 - v / 24), 0.6) + 1, brake: 16, reverseMax: 7,
+  vmax: 24, accel: (v) => 12 * dpow(Math.max(0, 1 - v / 24), 0.6) + 1, brake: 16, reverseMax: 7,
   steerRateLow: 2.4, steerRateHigh: 1.1,                 // rad/s at v 0 and at vmax, linear between
   gripAlign: { asphalt: 6.0, cobble: 6.0, pad: 6.0, grass: 3.5, sand: 3.0, drift: 2.5 },   // 1/s velocity to heading alignment rate
   cap: { asphalt: 1.0, cobble: 1.0, pad: 1.0, grass: 0.65, sand: 0.55 },
@@ -163,8 +167,8 @@ export class KartBody {
     this._kerbRumbleT = 0;
   }
 
-  get forward() { return _v3.set(Math.sin(this.heading), 0, Math.cos(this.heading)); }
-  get right() { return _v3b.set(-Math.cos(this.heading), 0, Math.sin(this.heading)); }
+  get forward() { return _v3.set(dsin(this.heading), 0, dcos(this.heading)); }
+  get right() { return _v3b.set(-dcos(this.heading), 0, dsin(this.heading)); }
   get raceProgress() { return raceProgressOf(this); }
   get invulnerable() { return this.invuln > 0 || this.state === 'spin' || this.state === 'fall' || this.state === 'respawn'; }
   get airborne() { return !this.grounded; }
@@ -230,7 +234,7 @@ export class KartBody {
     if (this.state === 'spin') {
       this.spinT += dt;
       const k = clamp(this.spinT / KART.spin.time, 0, 1);
-      this.spinAngle = TAU * KART.spin.turns * (1 - Math.pow(1 - k, 2));   // fast start, eases out
+      this.spinAngle = TAU * KART.spin.turns * (1 - dpow(1 - k, 2));   // fast start, eases out
       throttle = 0; steer = 0; hop = false;
       if (this.spinT >= KART.spin.time) { this.state = 'race'; this.spinAngle = 0; this.spinT = 0; }
     }
@@ -321,14 +325,14 @@ export class KartBody {
 
     // --- grip: rotate the velocity direction toward the heading
     const align = this.state === 'drift' ? KART.gripAlign.drift : (KART.gripAlign[this.surface] == null ? KART.gripAlign.asphalt : KART.gripAlign[this.surface]);
-    const hv = Math.hypot(this.vel.x, this.vel.z);
-    let theta = hv > 0.05 ? Math.atan2(this.vel.x, this.vel.z) : this.heading;
+    const hv = dhypot(this.vel.x, this.vel.z);
+    let theta = hv > 0.05 ? datan2(this.vel.x, this.vel.z) : this.heading;
     const targetTheta = v >= 0 ? this.heading : this.heading + Math.PI;
-    const k = 1 - Math.exp(-align * dt * (this.grounded ? 1 : 0.25));
+    const k = 1 - dexp(-align * dt * (this.grounded ? 1 : 0.25));
     theta += wrapAngle(targetTheta - theta) * k;
     const mag = Math.abs(v);
-    this.vel.x = Math.sin(theta) * mag;
-    this.vel.z = Math.cos(theta) * mag;
+    this.vel.x = dsin(theta) * mag;
+    this.vel.z = dcos(theta) * mag;
 
     // --- vertical: hop gravity while hopping, world gravity otherwise
     const g = this.state === 'hop' ? KART.hopGravity : KART.gravity;
@@ -343,7 +347,7 @@ export class KartBody {
     const fwd = this.vel.x * f.x + this.vel.z * f.z;
     // the magnitude, signed by the forward component: taking the projection itself would lose
     // cos(slip) every frame and turn a steady corner into a 40% per second brake
-    this.speed = Math.sign(fwd || 1) * Math.hypot(this.vel.x, this.vel.z);
+    this.speed = Math.sign(fwd || 1) * dhypot(this.vel.x, this.vel.z);
     if (Math.abs(this.speed) < 0.02 && Math.abs(throttle) < 0.02) this.speed = 0;
 
     // --- derived for the view
@@ -352,7 +356,7 @@ export class KartBody {
     this.steerAngle = this._steerSmoothed * KART.steerLock;
     this.wheelSpin += (this.speed / KART.wheelRadius) * dt;
     if (this.wheelSpin > 1e4 || this.wheelSpin < -1e4) this.wheelSpin %= TAU;
-    this.distance += Math.hypot(this.vel.x, this.vel.z) * dt;
+    this.distance += dhypot(this.vel.x, this.vel.z) * dt;
     this.cobbleShake = this.surface === 'cobble' && this.grounded && Math.abs(this.speed) > 4 ? 1 : 0;
     this._updateTilt();
     this._kerbs(dt);
@@ -439,7 +443,7 @@ export class KartBody {
     let half = 6;
     if (s && typeof s.at === 'function') { const q = s.at(this.progress, _qs); if (q && q.width > 0) half = q.width / 2; }
     if (this.onRoad && Math.abs(this.lateral) + C.track < half - C.band) { on[0] = on[1] = false; this.kerbOn = false; return; }
-    const hx = Math.sin(this.heading), hz = Math.cos(this.heading);
+    const hx = dsin(this.heading), hz = dcos(this.heading);
     const rx = -hz, rz = hx;                                   // right of travel
     const table = raceKerbTable(w, s);
     let any = false;
@@ -481,8 +485,8 @@ export class KartBody {
     if (!this.grounded) { this.tilt.roll *= 0.9; this.tilt.pitch *= 0.9; return; }
     const f = this.forward, r = this.right;
     // slope along forward and along right, from the normal
-    const pitch = Math.atan2(-(n.x * f.x + n.z * f.z), Math.max(0.2, n.y));   // nose up when the ground rises ahead
-    const roll = Math.atan2(-(n.x * r.x + n.z * r.z), Math.max(0.2, n.y));    // right side down when the ground drops right
+    const pitch = datan2(-(n.x * f.x + n.z * f.z), Math.max(0.2, n.y));   // nose up when the ground rises ahead
+    const roll = datan2(-(n.x * r.x + n.z * r.z), Math.max(0.2, n.y));    // right side down when the ground drops right
     this.tilt.pitch += (pitch - this.tilt.pitch) * 0.35;
     this.tilt.roll += (roll - this.tilt.roll) * 0.35;
   }
@@ -542,7 +546,7 @@ export class KartBody {
     const target = this.surfaceCap() + amount;
     if (this.speed < target) {
       this.speed = target;
-      const hv = Math.hypot(this.vel.x, this.vel.z);
+      const hv = dhypot(this.vel.x, this.vel.z);
       if (hv > 0.05) { const k = target / hv; this.vel.x *= k; this.vel.z *= k; }
       else { const f = this.forward; this.vel.x = f.x * target; this.vel.z = f.z * target; }
     }
@@ -555,7 +559,7 @@ export class KartBody {
    */
   bumpWith(other) {
     const dx = other.pos.x - this.pos.x, dz = other.pos.z - this.pos.z;
-    const d = Math.hypot(dx, dz);
+    const d = dhypot(dx, dz);
     const minD = KART.radius * 2;
     if (d >= minD || d < 1e-4) return false;
     if (Math.abs(other.pos.y - this.pos.y) > 1.2) return false;
@@ -575,9 +579,9 @@ export class KartBody {
       // speed is the MAGNITUDE signed by the forward component, as in update(): the projection
       // would lose cos(slip) on every frame of side by side contact and drain a drift to a crawl
       const f = this.forward; const fa = this.vel.x * f.x + this.vel.z * f.z;
-      this.speed = Math.sign(fa || 1) * Math.hypot(this.vel.x, this.vel.z);
+      this.speed = Math.sign(fa || 1) * dhypot(this.vel.x, this.vel.z);
       const g = other.forward; const fb = other.vel.x * g.x + other.vel.z * g.z;
-      other.speed = Math.sign(fb || 1) * Math.hypot(other.vel.x, other.vel.z);
+      other.speed = Math.sign(fb || 1) * dhypot(other.vel.x, other.vel.z);
       // a real knock hops both karts; rubbing along side by side does not (an airborne kart has no drive)
       if (rel > 2.5) {
         if (this.grounded && this.state !== 'hop') { this.vy = Math.max(this.vy, KART.bump.hop * 6); this.grounded = false; }
@@ -657,7 +661,7 @@ export class KartBody {
     const tg = s.tangent(p, new THREE.Vector3());
     this.pos.set(pt.x, pt.y + 0.4, pt.z);
     this.groundY = pt.y;
-    this.heading = Math.atan2(tg.x, tg.z);
+    this.heading = datan2(tg.x, tg.z);
     this.grounded = true;
     this.groundNormal.set(0, 1, 0);
     this.tilt.roll = 0; this.tilt.pitch = 0;

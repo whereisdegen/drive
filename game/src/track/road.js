@@ -60,6 +60,10 @@
  *            low sun) (applyRoadMaterial keeps it when present)
  * Tiles: receiveShadow true, userData { kind: 'road', block, sMin, sMax, surfaces }.
  */
+// Deterministic transcendentals, not the host's: Math.sin/cos/tan/atan2/pow/exp are not
+// specified to the last bit by ECMAScript and Chrome and Node genuinely disagree, which over a
+// 15 000 tick race is the difference between two cars. See src/token/detmath.js.
+import { datan2, dcos, dhypot, dsin, dtan, dtanh } from '../token/detmath.js?v=r6-20260906191941';
 import * as THREE from 'three';
 import { Spline, START_PROGRESS } from './spline.js?v=r6-20260906191941';
 
@@ -134,7 +138,7 @@ const TEX = { asphalt: 0, cobble: 1 };   // aSurf: which PATINA set the render m
 
 // ------------------------------------------------------------------------------------ helpers
 function hash2(x, z) {
-  const s = Math.sin(x * 127.1 + z * 311.7) * 43758.5453;
+  const s = dsin(x * 127.1 + z * 311.7) * 43758.5453;
   return s - Math.floor(s);
 }
 function smooth(t) { return t * t * (3 - 2 * t); }
@@ -177,7 +181,7 @@ export function hasPavement(spline, s, side) { return sideProfile(spline, s, sid
 export function yAt(q, l) {
   const h = q.width / 2;
   const lb = l < -h ? -h : l > h ? h : l;
-  return q.y - lb * Math.tan(q.bank * DEG);
+  return q.y - lb * dtan(q.bank * DEG);
 }
 /** Race kerb apron width for a road width: 1.2 m, 1.6 m on the 14 m harbour straight (blended over 12.5 to 13.5). */
 export function apronWidth(width) { return ROAD.APRON_W + (ROAD.APRON_W_WIDE - ROAD.APRON_W) * smoothstep(12.5, 13.5, width); }
@@ -203,7 +207,7 @@ export function apronRise(d, W = ROAD.APRON_W) {
 function lerpRow(a, b, t, out) {
   out.x = a.x + (b.x - a.x) * t; out.z = a.z + (b.z - a.z) * t; out.y = a.y + (b.y - a.y) * t;
   let nx = a.nx + (b.nx - a.nx) * t, nz = a.nz + (b.nz - a.nz) * t;
-  const nl = Math.hypot(nx, nz) || 1; out.nx = nx / nl; out.nz = nz / nl;
+  const nl = dhypot(nx, nz) || 1; out.nx = nx / nl; out.nz = nz / nl;
   out.width = a.width + (b.width - a.width) * t; out.bank = a.bank + (b.bank - a.bank) * t;
   out.tx = a.tx + (b.tx - a.tx) * t; out.tz = a.tz + (b.tz - a.tz) * t; out.grade = (a.grade || 0) + ((b.grade || 0) - (a.grade || 0)) * t;
   out.s = a.s + (b.s - a.s) * t; out.surface = a.surface; out.curvature = a.curvature;
@@ -281,7 +285,7 @@ export function buildRoad(THREE_, spline, opts = {}) {
     corner[i] = clamp(m / 0.03, 0, 1);
     ahead[i] = clamp(ma / 0.03, 0, 1);
     const ka = rows[mod(i + 8, N)].curvature, kb = rows[mod(i - 8, N)].curvature, k0 = rows[i].curvature;
-    rline[i] = 0.35 * rows[i].width * Math.tanh((ka - kb + 0.6 * k0) / 0.03);
+    rline[i] = 0.35 * rows[i].width * dtanh((ka - kb + 0.6 * k0) / 0.03);
   }
   // ---- race kerb runs per side (section 6): where kerb_module stations go, and where the apron stripes run.
   // Walk s in 0.5 m steps to find the white runs; a station every 4 m inside each run (the pitch stretched a
@@ -555,7 +559,7 @@ export function buildRoad(THREE_, spline, opts = {}) {
       if (Math.abs(sc - startS) < 14) continue;
       if (sills.some((ss) => Math.abs(sc - ss) < ROAD.SILL_LEN / 2 + 2)) continue;
       const q = spline.atDistance(sc, {});
-      if (PAD_DEFS.some((p) => Math.hypot(q.x - p.x, q.z - p.z) < 6)) continue;
+      if (PAD_DEFS.some((p) => dhypot(q.x - p.x, q.z - p.z) < 6)) continue;
       drains.push({ s0, s1: s0 + ROAD.DRAIN_SIZE, side });
     }
   }
@@ -830,7 +834,7 @@ export function buildRoad(THREE_, spline, opts = {}) {
     const h = q.width / 2;
     const lat = side * (h + ROAD.KERB_W / 2);
     const ox = q.nx * side, oz = q.nz * side;          // outward (the module's +Z; its road side is -Z)
-    const rot = mod(Math.atan2(ox, oz) / DEG, 360);
+    const rot = mod(datan2(ox, oz) / DEG, 360);
     return { x: q.x + q.nx * lat, z: q.z + q.nz * lat, y: yAt(q, side * h), rot, side: side < 0 ? 'L' : 'R', progress: s / L, s, section: q.section };
   }
 
@@ -853,7 +857,7 @@ export function buildRoad(THREE_, spline, opts = {}) {
       const lat = -(h + ROAD.WALL_OFFSET);
       const ox = -q.nx, oz = -q.nz;
       const gap = gapS.some((g) => Math.abs(s - g) < ROAD.GAP_HALF);
-      wallStations.push({ x: q.x + q.nx * lat, z: q.z + q.nz * lat, y: yAt(q, -h), rot: mod(Math.atan2(ox, oz) / DEG, 360), progress: s / L, s, gap, side: 'L' });
+      wallStations.push({ x: q.x + q.nx * lat, z: q.z + q.nz * lat, y: yAt(q, -h), rot: mod(datan2(ox, oz) / DEG, 360), progress: s / L, s, gap, side: 'L' });
     }
   }
 
@@ -861,7 +865,7 @@ export function buildRoad(THREE_, spline, opts = {}) {
   const pads = PAD_DEFS.map((p) => {
     const y = spline.roadY(p.x, p.z);
     const rad = p.rot * DEG;
-    return { ...p, y: Number.isNaN(y) ? 0 : y, cos: Math.cos(rad), sin: Math.sin(rad) };
+    return { ...p, y: Number.isNaN(y) ? 0 : y, cos: dcos(rad), sin: dsin(rad) };
   });
   const padStations = pads.map((p) => ({ id: p.id, x: p.x, z: p.z, y: p.y, rot: p.rot }));
   function padAt(x, z) {

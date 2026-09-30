@@ -1,0 +1,2446 @@
+{
+  "address": "3WpVj8hH1uRKF8m3N4R1zyQc1AmWomHSGyu5q5ujHH4o",
+  "metadata": {
+    "name": "race_stakes",
+    "version": "0.1.0",
+    "spec": "0.1.0",
+    "description": "Stake on being faster round Sorrel Cove"
+  },
+  "instructions": [
+    {
+      "name": "accept_authority",
+      "discriminator": [
+        107,
+        86,
+        198,
+        91,
+        33,
+        12,
+        107,
+        160
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "next_authority",
+          "signer": true
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "accept_duel",
+      "docs": [
+        "Match the stake and start your window to beat the posted time."
+      ],
+      "discriminator": [
+        80,
+        52,
+        90,
+        135,
+        172,
+        221,
+        175,
+        102
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "duel",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  117,
+                  101,
+                  108
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "duel_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "duel"
+              }
+            ]
+          }
+        },
+        {
+          "name": "opponent",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "stake_mint"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "from",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "_duel_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "cancel_duel",
+      "docs": [
+        "Withdraw an open duel: early by the challenger, or by anyone once `join_by` has passed.",
+        "No fee - nobody competed for it."
+      ],
+      "discriminator": [
+        83,
+        124,
+        224,
+        237,
+        235,
+        44,
+        38,
+        57
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "duel",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  117,
+                  101,
+                  108
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "duel_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "duel"
+              }
+            ]
+          }
+        },
+        {
+          "name": "caller",
+          "signer": true
+        },
+        {
+          "name": "stake_mint"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "challenger_token",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "_duel_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "create_pot",
+      "discriminator": [
+        232,
+        45,
+        123,
+        181,
+        204,
+        121,
+        131,
+        9
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "creator",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "stake_mint"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "pot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "pot_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pot"
+              }
+            ]
+          }
+        }
+      ],
+      "args": [
+        {
+          "name": "pot_id",
+          "type": "u64"
+        },
+        {
+          "name": "track_id",
+          "type": {
+            "array": [
+              "u8",
+              32
+            ]
+          }
+        },
+        {
+          "name": "entry_fee",
+          "type": "u64"
+        },
+        {
+          "name": "closes_at",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "enter_pot",
+      "docs": [
+        "Entering creates the entry PDA, so entering twice is impossible by construction."
+      ],
+      "discriminator": [
+        214,
+        244,
+        75,
+        140,
+        137,
+        143,
+        170,
+        162
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "entrant",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "stake_mint"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "pot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "pot_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pot"
+              }
+            ]
+          }
+        },
+        {
+          "name": "entry",
+          "docs": [
+            "`init` is the \"already entered\" check: entering twice cannot be constructed"
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  110,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pot"
+              },
+              {
+                "kind": "account",
+                "path": "entrant"
+              }
+            ]
+          }
+        },
+        {
+          "name": "from",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "_pot_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "initialize",
+      "discriminator": [
+        175,
+        175,
+        109,
+        31,
+        13,
+        152,
+        155,
+        237
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "treasury"
+        },
+        {
+          "name": "stake_mint"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": [
+        {
+          "name": "oracle",
+          "type": "pubkey"
+        },
+        {
+          "name": "fee_bps",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "open_duel",
+      "docs": [
+        "Post a verified time and a stake, and wait for someone to try to beat it."
+      ],
+      "discriminator": [
+        57,
+        46,
+        157,
+        124,
+        71,
+        205,
+        196,
+        29
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "challenger",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "stake_mint"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "duel",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  117,
+                  101,
+                  108
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "duel_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "duel"
+              }
+            ]
+          }
+        },
+        {
+          "name": "nonce_marker",
+          "docs": [
+            "Creating this marks the attestation spent. `init` means a replay cannot be submitted."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  110,
+                  111,
+                  110,
+                  99,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "challenger"
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "from",
+          "writable": true
+        },
+        {
+          "name": "ix_sysvar"
+        }
+      ],
+      "args": [
+        {
+          "name": "duel_id",
+          "type": "u64"
+        },
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "run",
+          "type": {
+            "defined": {
+              "name": "Run"
+            }
+          }
+        },
+        {
+          "name": "ed25519_ix_index",
+          "type": "u8"
+        },
+        {
+          "name": "stake",
+          "type": "u64"
+        },
+        {
+          "name": "join_by",
+          "type": "i64"
+        },
+        {
+          "name": "run_window",
+          "type": "i64"
+        }
+      ]
+    },
+    {
+      "name": "post_pot_time",
+      "docs": [
+        "Post a verified time. Only an improvement on your own best is recorded."
+      ],
+      "discriminator": [
+        43,
+        70,
+        119,
+        244,
+        87,
+        3,
+        2,
+        228
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "entrant",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "pot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "pot_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "entry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  110,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pot"
+              },
+              {
+                "kind": "account",
+                "path": "entrant"
+              }
+            ]
+          }
+        },
+        {
+          "name": "nonce_marker",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  110,
+                  111,
+                  110,
+                  99,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "entrant"
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "ix_sysvar"
+        }
+      ],
+      "args": [
+        {
+          "name": "_pot_id",
+          "type": "u64"
+        },
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "run",
+          "type": {
+            "defined": {
+              "name": "Run"
+            }
+          }
+        },
+        {
+          "name": "ed25519_ix_index",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "refund_pot",
+      "docs": [
+        "Reclaim your entry from a closed pot in which nobody set a verified time."
+      ],
+      "discriminator": [
+        43,
+        38,
+        238,
+        255,
+        48,
+        213,
+        224,
+        234
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "pot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "pot_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pot"
+              }
+            ]
+          }
+        },
+        {
+          "name": "entry",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  101,
+                  110,
+                  116,
+                  114,
+                  121
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pot"
+              },
+              {
+                "kind": "account",
+                "path": "entrant"
+              }
+            ]
+          }
+        },
+        {
+          "name": "entrant",
+          "signer": true
+        },
+        {
+          "name": "stake_mint"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "entrant_token",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "_pot_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "resolve_expired_duel",
+      "docs": [
+        "Accepted but not submitted in time: the challenger takes both stakes."
+      ],
+      "discriminator": [
+        96,
+        179,
+        191,
+        48,
+        90,
+        138,
+        88,
+        245
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "stake_mint"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "duel",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  117,
+                  101,
+                  108
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "duel_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "duel"
+              }
+            ]
+          }
+        },
+        {
+          "name": "challenger_token",
+          "writable": true
+        },
+        {
+          "name": "treasury_token",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "_duel_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "set_fee_bps",
+      "discriminator": [
+        2,
+        161,
+        245,
+        141,
+        111,
+        32,
+        39,
+        198
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "fee_bps",
+          "type": "u16"
+        }
+      ]
+    },
+    {
+      "name": "set_oracle",
+      "discriminator": [
+        186,
+        128,
+        81,
+        104,
+        74,
+        79,
+        18,
+        224
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "oracle",
+          "type": "pubkey"
+        }
+      ]
+    },
+    {
+      "name": "set_treasury",
+      "discriminator": [
+        57,
+        97,
+        196,
+        95,
+        195,
+        206,
+        106,
+        136
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "treasury"
+        }
+      ],
+      "args": []
+    },
+    {
+      "name": "settle_pot",
+      "docs": [
+        "After the close, pay the fastest entrant."
+      ],
+      "discriminator": [
+        120,
+        181,
+        232,
+        100,
+        60,
+        57,
+        32,
+        238
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "stake_mint"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "pot",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  112,
+                  111,
+                  116
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "pot_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "pot"
+              }
+            ]
+          }
+        },
+        {
+          "name": "winner"
+        },
+        {
+          "name": "winner_token",
+          "writable": true
+        },
+        {
+          "name": "treasury_token",
+          "writable": true
+        }
+      ],
+      "args": [
+        {
+          "name": "_pot_id",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "submit_duel",
+      "docs": [
+        "Submit your attempt. Strictly faster than the target wins the pot; a tie or a slower time",
+        "hands it to the challenger, who does not have to do anything."
+      ],
+      "discriminator": [
+        229,
+        45,
+        120,
+        20,
+        48,
+        120,
+        98,
+        165
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "opponent",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "stake_mint"
+        },
+        {
+          "name": "token_program"
+        },
+        {
+          "name": "system_program",
+          "address": "11111111111111111111111111111111"
+        },
+        {
+          "name": "duel",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  100,
+                  117,
+                  101,
+                  108
+                ]
+              },
+              {
+                "kind": "arg",
+                "path": "duel_id"
+              }
+            ]
+          }
+        },
+        {
+          "name": "vault",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  118,
+                  97,
+                  117,
+                  108,
+                  116
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "duel"
+              }
+            ]
+          }
+        },
+        {
+          "name": "nonce_marker",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  110,
+                  111,
+                  110,
+                  99,
+                  101
+                ]
+              },
+              {
+                "kind": "account",
+                "path": "opponent"
+              },
+              {
+                "kind": "arg",
+                "path": "nonce"
+              }
+            ]
+          }
+        },
+        {
+          "name": "opponent_token",
+          "writable": true
+        },
+        {
+          "name": "challenger_token",
+          "docs": [
+            "the challenger's payout account; checked to belong to the challenger on this duel"
+          ],
+          "writable": true
+        },
+        {
+          "name": "treasury_token",
+          "writable": true
+        },
+        {
+          "name": "ix_sysvar"
+        }
+      ],
+      "args": [
+        {
+          "name": "_duel_id",
+          "type": "u64"
+        },
+        {
+          "name": "nonce",
+          "type": "u64"
+        },
+        {
+          "name": "run",
+          "type": {
+            "defined": {
+              "name": "Run"
+            }
+          }
+        },
+        {
+          "name": "ed25519_ix_index",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "transfer_authority",
+      "docs": [
+        "Two-step, because a mistyped authority on a one-step handover is unrecoverable."
+      ],
+      "discriminator": [
+        48,
+        169,
+        76,
+        72,
+        229,
+        180,
+        55,
+        161
+      ],
+      "accounts": [
+        {
+          "name": "config",
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "authority",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "next",
+          "type": "pubkey"
+        }
+      ]
+    }
+  ],
+  "accounts": [
+    {
+      "name": "Config",
+      "discriminator": [
+        155,
+        12,
+        170,
+        224,
+        30,
+        250,
+        204,
+        130
+      ]
+    },
+    {
+      "name": "Duel",
+      "discriminator": [
+        126,
+        229,
+        210,
+        60,
+        177,
+        135,
+        124,
+        224
+      ]
+    },
+    {
+      "name": "NonceMarker",
+      "discriminator": [
+        174,
+        255,
+        14,
+        196,
+        0,
+        157,
+        150,
+        207
+      ]
+    },
+    {
+      "name": "Pot",
+      "discriminator": [
+        238,
+        118,
+        60,
+        175,
+        178,
+        191,
+        59,
+        58
+      ]
+    },
+    {
+      "name": "PotEntry",
+      "discriminator": [
+        131,
+        236,
+        115,
+        13,
+        86,
+        115,
+        12,
+        219
+      ]
+    }
+  ],
+  "events": [
+    {
+      "name": "DuelAccepted",
+      "discriminator": [
+        237,
+        234,
+        86,
+        197,
+        103,
+        136,
+        209,
+        66
+      ]
+    },
+    {
+      "name": "DuelCancelled",
+      "discriminator": [
+        138,
+        79,
+        20,
+        163,
+        207,
+        11,
+        111,
+        213
+      ]
+    },
+    {
+      "name": "DuelOpened",
+      "discriminator": [
+        51,
+        60,
+        29,
+        211,
+        18,
+        26,
+        116,
+        47
+      ]
+    },
+    {
+      "name": "DuelSettled",
+      "discriminator": [
+        254,
+        160,
+        50,
+        193,
+        155,
+        112,
+        122,
+        64
+      ]
+    },
+    {
+      "name": "PotCreated",
+      "discriminator": [
+        123,
+        24,
+        71,
+        133,
+        138,
+        137,
+        140,
+        204
+      ]
+    },
+    {
+      "name": "PotEntered",
+      "discriminator": [
+        124,
+        163,
+        205,
+        134,
+        212,
+        138,
+        203,
+        64
+      ]
+    },
+    {
+      "name": "PotRefunded",
+      "discriminator": [
+        66,
+        2,
+        75,
+        132,
+        143,
+        206,
+        8,
+        187
+      ]
+    },
+    {
+      "name": "PotSettled",
+      "discriminator": [
+        124,
+        98,
+        181,
+        97,
+        181,
+        97,
+        101,
+        89
+      ]
+    },
+    {
+      "name": "PotTimePosted",
+      "discriminator": [
+        234,
+        171,
+        70,
+        217,
+        221,
+        181,
+        179,
+        98
+      ]
+    }
+  ],
+  "errors": [
+    {
+      "code": 6000,
+      "name": "WrongSysvar",
+      "msg": "the instructions sysvar was not supplied"
+    },
+    {
+      "code": 6001,
+      "name": "MissingEd25519Ix",
+      "msg": "no Ed25519 instruction at the given index"
+    },
+    {
+      "code": 6002,
+      "name": "NotEd25519Program",
+      "msg": "that instruction is not the Ed25519 native program"
+    },
+    {
+      "code": 6003,
+      "name": "MalformedEd25519Ix",
+      "msg": "the Ed25519 instruction is malformed or carries more than one signature"
+    },
+    {
+      "code": 6004,
+      "name": "WrongOracleKey",
+      "msg": "signed by a key that is not this program's oracle"
+    },
+    {
+      "code": 6005,
+      "name": "MessageMismatch",
+      "msg": "the signature is over a different message than the one presented"
+    },
+    {
+      "code": 6006,
+      "name": "WrongDriver",
+      "msg": "that attestation belongs to a different driver"
+    },
+    {
+      "code": 6007,
+      "name": "WrongTrack",
+      "msg": "that time was set on a different track"
+    },
+    {
+      "code": 6008,
+      "name": "AttestationExpired",
+      "msg": "that attestation has expired - drive it again"
+    },
+    {
+      "code": 6009,
+      "name": "NonceSpent",
+      "msg": "that run has already been used"
+    },
+    {
+      "code": 6010,
+      "name": "StaleRun",
+      "msg": "you have to set the time AFTER taking the challenge"
+    },
+    {
+      "code": 6011,
+      "name": "ZeroStake",
+      "msg": "stake something more than zero"
+    },
+    {
+      "code": 6012,
+      "name": "BadWindow",
+      "msg": "that deadline is out of range"
+    },
+    {
+      "code": 6013,
+      "name": "BadState",
+      "msg": "this contest is not in a state where that works"
+    },
+    {
+      "code": 6014,
+      "name": "NotYet",
+      "msg": "too early - the window has not closed"
+    },
+    {
+      "code": 6015,
+      "name": "TooLate",
+      "msg": "too late - the window has closed"
+    },
+    {
+      "code": 6016,
+      "name": "NotParticipant",
+      "msg": "you are not in this contest"
+    },
+    {
+      "code": 6017,
+      "name": "AlreadyEntered",
+      "msg": "you have already entered"
+    },
+    {
+      "code": 6018,
+      "name": "NotEntered",
+      "msg": "enter the pot first"
+    },
+    {
+      "code": 6019,
+      "name": "SelfDuel",
+      "msg": "you cannot duel yourself"
+    },
+    {
+      "code": 6020,
+      "name": "FeeTooHigh",
+      "msg": "that fee is above the cap"
+    },
+    {
+      "code": 6021,
+      "name": "WrongMint",
+      "msg": "the wrong mint for this contest"
+    },
+    {
+      "code": 6022,
+      "name": "WrongTreasury",
+      "msg": "the wrong treasury account"
+    },
+    {
+      "code": 6023,
+      "name": "FeeOnTransferToken",
+      "msg": "the token transferred in did not match the amount requested"
+    },
+    {
+      "code": 6024,
+      "name": "Overflow",
+      "msg": "arithmetic overflow"
+    }
+  ],
+  "types": [
+    {
+      "name": "Config",
+      "docs": [
+        "Protocol settings and the two counters. One per deployment, at PDA [\"config\"]."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "authority",
+            "type": "pubkey"
+          },
+          {
+            "name": "pending_authority",
+            "docs": [
+              "two-step handover, so a typo cannot orphan the program"
+            ],
+            "type": {
+              "option": "pubkey"
+            }
+          },
+          {
+            "name": "oracle",
+            "docs": [
+              "the key whose Ed25519 signatures this program accepts as lap times"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "treasury",
+            "docs": [
+              "receives the protocol fee"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "stake_mint",
+            "docs": [
+              "the SPL mint everything is staked in"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "fee_bps",
+            "docs": [
+              "protocol cut of a settled contest, in basis points; capped at MAX_FEE_BPS"
+            ],
+            "type": "u16"
+          },
+          {
+            "name": "duel_count",
+            "type": "u64"
+          },
+          {
+            "name": "pot_count",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Duel",
+      "docs": [
+        "One head-to-head. PDA [\"duel\", id]."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "challenger",
+            "type": "pubkey"
+          },
+          {
+            "name": "opponent",
+            "docs": [
+              "Pubkey::default() until someone accepts"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "stake",
+            "type": "u64"
+          },
+          {
+            "name": "target_ms",
+            "docs": [
+              "the time to beat, in milliseconds"
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "track_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "join_by",
+            "docs": [
+              "unaccepted duels can be cancelled after this"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "run_by",
+            "docs": [
+              "set on accept: the opponent must submit before this"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "accepted_at",
+            "type": "i64"
+          },
+          {
+            "name": "run_window",
+            "type": "u32"
+          },
+          {
+            "name": "result_ms",
+            "docs": [
+              "what the opponent actually drove, once submitted"
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "status",
+            "type": {
+              "defined": {
+                "name": "DuelStatus"
+              }
+            }
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "vault_bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DuelAccepted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "opponent",
+            "type": "pubkey"
+          },
+          {
+            "name": "run_by",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DuelCancelled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DuelOpened",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "challenger",
+            "type": "pubkey"
+          },
+          {
+            "name": "stake",
+            "type": "u64"
+          },
+          {
+            "name": "target_ms",
+            "type": "u32"
+          },
+          {
+            "name": "track_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "join_by",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DuelSettled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "winner",
+            "type": "pubkey"
+          },
+          {
+            "name": "winner_ms",
+            "type": "u32"
+          },
+          {
+            "name": "target_ms",
+            "type": "u32"
+          },
+          {
+            "name": "payout",
+            "type": "u64"
+          },
+          {
+            "name": "fee",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "DuelStatus",
+      "type": {
+        "kind": "enum",
+        "variants": [
+          {
+            "name": "Open"
+          },
+          {
+            "name": "Accepted"
+          },
+          {
+            "name": "Settled"
+          },
+          {
+            "name": "Cancelled"
+          }
+        ]
+      }
+    },
+    {
+      "name": "NonceMarker",
+      "docs": [
+        "A spent attestation. PDA [\"nonce\", driver, nonce].",
+        "",
+        "On EVM this was `mapping(address => mapping(uint256 => bool))`. Here the ACCOUNT's existence",
+        "is the flag: `init` fails if it already exists, so replaying a nonce cannot even be",
+        "constructed as a transaction. Nothing is stored in it beyond the bump."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "driver",
+            "type": "pubkey"
+          },
+          {
+            "name": "nonce",
+            "type": "u64"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Pot",
+      "docs": [
+        "An open time attack. PDA [\"pot\", id]."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "track_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "entry_fee",
+            "type": "u64"
+          },
+          {
+            "name": "prize",
+            "type": "u64"
+          },
+          {
+            "name": "opens_at",
+            "type": "i64"
+          },
+          {
+            "name": "closes_at",
+            "type": "i64"
+          },
+          {
+            "name": "leader",
+            "docs": [
+              "Pubkey::default() until someone posts a time"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "leader_ms",
+            "type": "u32"
+          },
+          {
+            "name": "entrants",
+            "type": "u32"
+          },
+          {
+            "name": "settled",
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          },
+          {
+            "name": "vault_bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PotCreated",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "track_id",
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "entry_fee",
+            "type": "u64"
+          },
+          {
+            "name": "closes_at",
+            "type": "i64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PotEntered",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "entrant",
+            "type": "pubkey"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PotEntry",
+      "docs": [
+        "One entrant's place in a pot. PDA [\"entry\", pot, entrant]. Its existence is the entry."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "pot",
+            "type": "pubkey"
+          },
+          {
+            "name": "entrant",
+            "type": "pubkey"
+          },
+          {
+            "name": "best_ms",
+            "docs": [
+              "0 until they post one"
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "refunded",
+            "docs": [
+              "cleared on refund, so a refund cannot be taken twice"
+            ],
+            "type": "bool"
+          },
+          {
+            "name": "bump",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PotRefunded",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "entrant",
+            "type": "pubkey"
+          },
+          {
+            "name": "amount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PotSettled",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "winner",
+            "type": "pubkey"
+          },
+          {
+            "name": "winner_ms",
+            "type": "u32"
+          },
+          {
+            "name": "payout",
+            "type": "u64"
+          },
+          {
+            "name": "fee",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "PotTimePosted",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "id",
+            "type": "u64"
+          },
+          {
+            "name": "entrant",
+            "type": "pubkey"
+          },
+          {
+            "name": "time_ms",
+            "type": "u32"
+          },
+          {
+            "name": "is_new_leader",
+            "type": "bool"
+          }
+        ]
+      }
+    },
+    {
+      "name": "Run",
+      "docs": [
+        "The claim the oracle makes about one recorded run. Mirrors the EVM `Run` struct field for",
+        "field, so the same oracle logic produces both."
+      ],
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "driver",
+            "docs": [
+              "the only wallet that may present this attestation"
+            ],
+            "type": "pubkey"
+          },
+          {
+            "name": "track_id",
+            "docs": [
+              "the circuit it was set on: spline plus every collider (see docs/DETERMINISM.md)"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "time_ms",
+            "docs": [
+              "total race time in milliseconds, as MEASURED by the oracle's replay - never as claimed"
+            ],
+            "type": "u32"
+          },
+          {
+            "name": "trace_hash",
+            "docs": [
+              "hash of the canonical input trace, so the run behind a time stays auditable"
+            ],
+            "type": {
+              "array": [
+                "u8",
+                32
+              ]
+            }
+          },
+          {
+            "name": "issued_at",
+            "docs": [
+              "when the oracle verified it; contests require a time set after they began"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "deadline",
+            "docs": [
+              "unix seconds after which this signature is dead"
+            ],
+            "type": "i64"
+          },
+          {
+            "name": "nonce",
+            "docs": [
+              "single use, per driver"
+            ],
+            "type": "u64"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -33,6 +33,10 @@
  *
  * Plain hyphens only in every string; Ben reads the results screen.
  */
+// Deterministic transcendentals, not the host's: Math.sin/cos/tan/atan2/pow/exp are not
+// specified to the last bit by ECMAScript and Chrome and Node genuinely disagree, which over a
+// 15 000 tick race is the difference between two cars. See src/token/detmath.js.
+import { dcos, dsin } from '../token/detmath.js?v=r6-20260906191941';
 const DEFAULT_CHECKPOINTS = [0.037, 0.33, 0.66];
 const DEFAULT_START = 0.037;
 const COUNTDOWN_FROM = 3;
@@ -223,7 +227,7 @@ export class Race {
     // wrong way: heading against the tangent at speed for 2 s
     if (!r.finished && this.spline && typeof this.spline.at === 'function' && Math.abs(b.speed || 0) > WRONG_WAY_SPEED) {
       const q = this.spline.at(p, this._tmp);
-      const fx = Math.sin(b.heading), fz = Math.cos(b.heading);
+      const fx = dsin(b.heading), fz = dcos(b.heading);
       const dot = fx * q.tx + fz * q.tz;
       const against = (b.speed > 0 ? dot : -dot) < -0.2;
       r.wrongWayT = against ? r.wrongWayT + dt : 0;

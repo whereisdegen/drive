@@ -17,6 +17,10 @@
  * addCylinder; addWallSegment takes the two base points and the height.
  */
 import * as THREE from 'three';
+// Deterministic transcendentals, not the host's: Math.sin/cos/tan/atan2/pow/exp are not
+// specified to the last bit by ECMAScript and Chrome and Node genuinely disagree, which over a
+// 15 000 tick race is the difference between two cars. See src/token/detmath.js.
+import { dcos, dhypot, dsin } from '../token/detmath.js?v=r6-20260906191941';
 import { yAt } from './road.js?v=r6-20260906191941';
 
 const UP = new THREE.Vector3(0, 1, 0);
@@ -58,7 +62,7 @@ export class World {
     return c;
   }
   addBox(center, size, yaw = 0, tag = 'static') {
-    const hx = size.x / 2, hz = size.z / 2, cos = Math.cos(yaw), sin = Math.sin(yaw);
+    const hx = size.x / 2, hz = size.z / 2, cos = dcos(yaw), sin = dsin(yaw);
     const ex = Math.abs(hx * cos) + Math.abs(hz * sin), ez = Math.abs(hx * sin) + Math.abs(hz * cos);
     return this._insert({
       type: 'box', tag, cx: center.x, cz: center.z, hx, hz, cos, sin,
@@ -109,7 +113,7 @@ export class World {
   /** Circle (px, pz, r) against a collider: { pen, nx, nz } or null. */
   _pen(c, px, pz, r) {
     if (c.type === 'cyl') {
-      const dx = px - c.cx, dz = pz - c.cz, d = Math.hypot(dx, dz);
+      const dx = px - c.cx, dz = pz - c.cz, d = dhypot(dx, dz);
       if (d >= c.r + r) return null;
       return d > 1e-6 ? { pen: c.r + r - d, nx: dx / d, nz: dz / d } : { pen: c.r + r, nx: 1, nz: 0 };
     }
@@ -117,7 +121,7 @@ export class World {
       const vx = c.bx - c.ax, vz = c.bz - c.az, vv = vx * vx + vz * vz || 1;
       let t = ((px - c.ax) * vx + (pz - c.az) * vz) / vv; t = t < 0 ? 0 : t > 1 ? 1 : t;
       const qx = c.ax + vx * t, qz = c.az + vz * t;
-      const dx = px - qx, dz = pz - qz, d = Math.hypot(dx, dz);
+      const dx = px - qx, dz = pz - qz, d = dhypot(dx, dz);
       if (d >= c.t + r) return null;
       if (d > 1e-6) return { pen: c.t + r - d, nx: dx / d, nz: dz / d };
       const l = Math.sqrt(vv); return { pen: c.t + r, nx: -vz / l, nz: vx / l };
@@ -131,7 +135,7 @@ export class World {
       const ex = c.hx - Math.abs(lx), ez = c.hz - Math.abs(lz);
       if (ex < ez) { nlx = lx < 0 ? -1 : 1; nlz = 0; pen = ex + r; } else { nlx = 0; nlz = lz < 0 ? -1 : 1; pen = ez + r; }
     } else {
-      const ddx = lx - qx, ddz = lz - qz, d = Math.hypot(ddx, ddz);
+      const ddx = lx - qx, ddz = lz - qz, d = dhypot(ddx, ddz);
       if (d >= r) return null;
       nlx = ddx / d; nlz = ddz / d; pen = r - d;
     }
@@ -206,7 +210,7 @@ export class World {
   /** March a sphere from -> to against colliders and the ground; for the chase camera pull in. */
   sphereCast(from, to, radius = 0.4) {
     const dx = to.x - from.x, dy = to.y - from.y, dz = to.z - from.z;
-    const len = Math.hypot(dx, dy, dz);
+    const len = dhypot(dx, dy, dz);
     const steps = Math.max(1, Math.ceil(len / 0.5));
     const p = new THREE.Vector3(), prev = from.clone();
     for (let i = 1; i <= steps; i++) {

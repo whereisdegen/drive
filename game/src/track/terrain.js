@@ -20,6 +20,10 @@
  * aPaint (0 grass, 1 sand, 2 cobble, 3 rock, 4 asphalt; asphalt also weights the cobble channel).
  */
 import * as THREE from 'three';
+// Deterministic transcendentals, not the host's: Math.sin/cos/tan/atan2/pow/exp/hypot are not
+// specified to the last bit by ECMAScript and Chrome and Node genuinely disagree, which over a
+// 15 000 tick race is the difference between two cars. See src/token/detmath.js.
+import { dacos, dcos, dhypot, dtan } from '../token/detmath.js?v=r6-20260906191941';
 import { sideProfile, noise2, smoothstep, yAt, ROAD } from './road.js?v=r6-20260906191941';
 
 export const TERRAIN_SPEC = {
@@ -65,7 +69,7 @@ const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
 /** Distance outside an axis aligned rect (0 inside). */
 function rectDist(x, z, r) {
   const dx = Math.max(r.x0 - x, 0, x - r.x1), dz = Math.max(r.z0 - z, 0, z - r.z1);
-  return Math.hypot(dx, dz);
+  return dhypot(dx, dz);
 }
 
 export function buildTerrain(THREE_, spline, spec = TERRAIN_SPEC) {
@@ -76,8 +80,8 @@ export function buildTerrain(THREE_, spline, spec = TERRAIN_SPEC) {
   const S = spec;
   const wpS = spline.waypointS;
   const sCliffA = wpS[S.cliff.wpA], sCliffB = wpS[S.cliff.wpB];
-  const tanCliff = Math.tan(S.cliff.angleDeg * DEG);
-  const gradLen = Math.hypot(S.base.kx, S.base.kz);            // base rise per metre along the gradient
+  const tanCliff = dtan(S.cliff.angleDeg * DEG);
+  const gradLen = dhypot(S.base.kx, S.base.kz);            // base rise per metre along the gradient
   const terraceFrac = (gradLen * S.terraces.edgeMetres) / S.terraces.step;
   const pads = S.pads.concat(spec.extraPads || []);
 
@@ -197,7 +201,7 @@ export function buildTerrain(THREE_, spline, spec = TERRAIN_SPEC) {
     let domeR = Infinity;
     {
       const L = S.lighthouse;
-      const r = Math.hypot(x - L.x, z - L.z); domeR = r;
+      const r = dhypot(x - L.x, z - L.z); domeR = r;
       if (r < L.radius) y = Math.max(y, L.top * (1 - smoothstep(L.flat, L.radius, r)) + (noise2(x, z, 5) - 0.5) * 0.3 * (r > L.flat ? 1 : 0));
     }
     out.domeR = domeR;
@@ -241,7 +245,7 @@ export function buildTerrain(THREE_, spline, spec = TERRAIN_SPEC) {
   }
   // ---- 2. normals and the rock override by slope
   const normals = new Float32Array(nx * nz * 3);
-  const cosRock = Math.cos(S.rockSlopeDeg * DEG);
+  const cosRock = dcos(S.rockSlopeDeg * DEG);
   for (let iz = 0; iz < nz; iz++) {
     for (let ix = 0; ix < nx; ix++) {
       const k = iz * nx + ix;
@@ -249,7 +253,7 @@ export function buildTerrain(THREE_, spline, spec = TERRAIN_SPEC) {
       const hd = heights[Math.max(0, iz - 1) * nx + ix], hu = heights[Math.min(nz - 1, iz + 1) * nx + ix];
       const sx = (ix === 0 || ix === nx - 1) ? cell : 2 * cell, sz = (iz === 0 || iz === nz - 1) ? cell : 2 * cell;
       let vx = -(hr - hl) / sx, vy = 1, vz = -(hu - hd) / sz;
-      const len = Math.hypot(vx, vy, vz); vx /= len; vy /= len; vz /= len;
+      const len = dhypot(vx, vy, vz); vx /= len; vy /= len; vz /= len;
       normals[k * 3] = vx; normals[k * 3 + 1] = vy; normals[k * 3 + 2] = vz;
       if (vy < cosRock && heights[k] > -1.2) paint[k] = PAINT.rock;
     }
@@ -334,7 +338,7 @@ export function buildTerrain(THREE_, spline, spec = TERRAIN_SPEC) {
     return out.set(-(hr - hl) / (2 * e), 1, -(hu - hd) / (2 * e)).normalize();
   }
   const nTmp = new THREE.Vector3();
-  function slopeAt(x, z) { return Math.acos(clamp(normalAt(x, z, nTmp).y, -1, 1)); }
+  function slopeAt(x, z) { return dacos(clamp(normalAt(x, z, nTmp).y, -1, 1)); }
   function paintAt(x, z) {
     const ix = clamp(Math.round((x - B.minX) / cell), 0, nx - 1), iz = clamp(Math.round((z - B.minZ) / cell), 0, nz - 1);
     return PAINT_NAME[paint[iz * nx + ix]];

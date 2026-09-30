@@ -1,0 +1,19 @@
+{
+  "name": "drive-oracle",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Replay verification and attestation for DRIVE time trials",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test test/*.test.mjs",
+    "mathprobe": "node tools/mathprobe.mjs",
+    "settle": "node tools/settle.mjs",
+    "sync-idl": "node tools/sync-idl.mjs"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.32.1",
+    "@solana/web3.js": "^1.99.0",
+    "three": "^0.169.0"
+  }
+}

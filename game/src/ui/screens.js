@@ -85,7 +85,10 @@ export function ordinal(p) {
 const CSS = `
 #load,#start,#pause,#over{position:fixed;inset:0;z-index:20;font-family:${FONT};color:${PAPER};font-weight:800;
   font-variant-numeric:tabular-nums;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
-#load .ttl,#start .ttl,#pause .ttl,#over .ttl{font-family:${WIDE};font-weight:900;font-size:clamp(54px,12vw,150px);line-height:.86;letter-spacing:-.045em;color:${PAPER};text-transform:uppercase}
+/* TENSORACE is nine characters where DRIVE was five - 2.06x the width at the same size - and
+   the start screen's column is capped at min(560px, 86vw). 9.2vw keeps it inside that column
+   at every width, and 60px is where it stops growing because the column stops growing. */
+#load .ttl,#start .ttl,#pause .ttl,#over .ttl{font-family:${WIDE};font-weight:900;font-size:clamp(25px,8.8vw,57px);line-height:.86;letter-spacing:-.045em;color:${PAPER};text-transform:uppercase;white-space:nowrap}
 .ttl i{font-style:normal;color:${CORAL}}
 .pix{font-family:${PIX};font-weight:400;font-size:11px;letter-spacing:.08em;text-transform:uppercase}
 .rule{height:4px;background:${CORAL};width:min(340px,42vw);margin:14px 0 12px}
@@ -145,7 +148,7 @@ function ensureStyle() {
   document.head.appendChild(s);
 }
 
-const TITLE = `<div class="ttl">Dri<i>ve</i></div>`;
+const TITLE = `<div class="ttl">Tenso<i>race</i></div>`;   // .ttl uppercases; <i> is the coral half
 
 export class Screens {
   constructor(container, { round = 'r0', laps = 3, racers = 8, lapMetres = 1061 } = {}) {

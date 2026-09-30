@@ -1,0 +1,26 @@
+[package]
+name = "race_stakes"
+version = "0.1.0"
+description = "Stake on being faster round Sorrel Cove"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "race_stakes"
+
+[features]
+default = []
+cpi = ["no-entrypoint"]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+idl-build = ["anchor-lang/idl-build", "anchor-spl/idl-build"]
+
+[dependencies]
+anchor-lang = { version = "1.2.0", features = ["init-if-needed"] }
+# token_interface, so a launchpad token works whether it is classic SPL or Token-2022
+anchor-spl = "1.2.0"
+# Anchor 1.x slimmed its solana_program re-exports; the instructions sysvar
+# reader and the program ids now come from their own small crates
+solana-instructions-sysvar = "3.0.0"
+solana-sdk-ids = "3.1.0"

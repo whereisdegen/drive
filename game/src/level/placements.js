@@ -28,6 +28,10 @@
  * edges exist without the track module. When build.js is handed the real road and terrain it
  * prefers road.kerbs, road.wallStations and terrain.cliffEdge (expandPlacements below).
  */
+// Deterministic transcendentals, not the host's: Math.sin/cos/tan/atan2/pow/exp/hypot are not
+// specified to the last bit by ECMAScript and Chrome and Node genuinely disagree, which over a
+// 15 000 tick race is the difference between two cars. See src/token/detmath.js.
+import { datan2, dcos, dhypot, dsin } from '../token/detmath.js?v=r6-20260906191941';
 
 // ------------------------------------------------------------------------------------ data
 /** TRACK-PLAN section 3: [x, z, y, width, bank, section] */
@@ -109,7 +113,7 @@ export function mulberry32(seed) {
 const DEG = 180 / Math.PI;
 const norm360 = (d) => ((d % 360) + 360) % 360;
 /** rotation (degrees) whose +Z face points along the world direction (dx, dz) */
-export const facing = (dx, dz) => norm360(Math.atan2(dx, dz) * DEG);
+export const facing = (dx, dz) => norm360(datan2(dx, dz) * DEG);
 /** rotation whose local X axis lies along the tangent (tx, tz) and whose +Z face points to the RIGHT of travel */
 export const alongRoad = (tx, tz) => facing(-tz, tx);
 export const rightOf = (tx, tz) => [-tz, tx];
@@ -145,7 +149,7 @@ export function trackTable() {
     const a = fine[i], b = fine[(i + 1) % fine.length];
     a.s = s;
     if (a.k === 0) wpS[a.wp] = s;
-    s += Math.hypot(b.x - a.x, b.z - a.z);
+    s += dhypot(b.x - a.x, b.z - a.z);
   }
   const L = s;
   // resample every 1.5 m with tangents
@@ -158,7 +162,7 @@ export function trackTable() {
     const seg = (j + 1 < fine.length ? b.s : L) - a.s;
     const t = seg > 1e-9 ? (d - a.s) / seg : 0;
     const lerp = (k) => a[k] + (b[k] - a[k]) * t;
-    let tx = b.x - a.x, tz = b.z - a.z; const tl = Math.hypot(tx, tz) || 1; tx /= tl; tz /= tl;
+    let tx = b.x - a.x, tz = b.z - a.z; const tl = dhypot(tx, tz) || 1; tx /= tl; tz /= tl;
     samples.push({ s: d, progress: d / L, x: lerp('x'), z: lerp('z'), y: lerp('y'), width: lerp('width'), bank: lerp('bank'),
       tx, tz, section: a.section, surface: 'BCDE'.includes(a.section) ? 'cobble' : 'asphalt' });
   }
@@ -172,7 +176,7 @@ export function atDistance(s) {
   const i = Math.min(n - 1, Math.floor(d / 1.5)), a = T.samples[i], b = T.samples[(i + 1) % n];
   const t = (d - a.s) / 1.5;
   const lerp = (k) => a[k] + (b[k] - a[k]) * t;
-  let tx = lerp('tx'), tz = lerp('tz'); const tl = Math.hypot(tx, tz) || 1;
+  let tx = lerp('tx'), tz = lerp('tz'); const tl = dhypot(tx, tz) || 1;
   return { s: d, progress: d / T.length, x: lerp('x'), z: lerp('z'), y: lerp('y'), width: lerp('width'), bank: lerp('bank'), tx: tx / tl, tz: tz / tl, section: a.section };
 }
 export const atProgress = (p) => atDistance(p * trackTable().length);
@@ -200,7 +204,7 @@ export function roadside(s, side, offset) {
   // of the object is upstream. A kart on the pavement that hits it slides along the face back onto the road
   // instead of stopping against a face square to its travel (round 1 wedge fix, chevron boards)
   const toRoad = [-rx * side, -rz * side];
-  const rotFaceBackToward = (deg) => { const a = deg / DEG, ca = Math.cos(a), sa = Math.sin(a); return facing(-sm.tx * ca + toRoad[0] * sa, -sm.tz * ca + toRoad[1] * sa); };
+  const rotFaceBackToward = (deg) => { const a = deg / DEG, ca = dcos(a), sa = dsin(a); return facing(-sm.tx * ca + toRoad[0] * sa, -sm.tz * ca + toRoad[1] * sa); };
   return { x: sm.x + rx * side * offset, z: sm.z + rz * side * offset, sm,
     rotFaceRoad: facing(-rx * side, -rz * side), rotFaceAway: facing(rx * side, rz * side),
     rotAlong: alongRoad(sm.tx, sm.tz), rotFaceBack: facing(-sm.tx, -sm.tz), rotFaceAhead: facing(sm.tx, sm.tz), rotFaceBackToward };
@@ -276,7 +280,7 @@ function bougainvilleaOn(row, rng, tag, every = 1, max = Infinity, avoid = []) {
 }
 /** true when no placement in `list` on the same asset class sits within `r` metres of (x, z): keeps pavement furniture apart */
 function clearOf(list, x, z, r = 2.5) {
-  return !list.some((p) => Math.hypot(p.x - x, p.z - z) < r);
+  return !list.some((p) => dhypot(p.x - x, p.z - z) < r);
 }
 /**
  * A run of n spectator groups (round 3, critic item 5: "the spectators are a rectangular card ... split the crowd into
@@ -290,8 +294,8 @@ function clearOf(list, x, z, r = 2.5) {
  * (work/fix3_level/NOTES.md).
  */
 function crowdRun(out, x, z, rot, n, tag, opts = {}) {
-  const a = rot / DEG, ax = Math.cos(a), az = -Math.sin(a);       // along the run
-  const fx = Math.sin(a), fz = Math.cos(a);                        // facing (toward the road)
+  const a = rot / DEG, ax = dcos(a), az = -dsin(a);       // along the run
+  const fx = dsin(a), fz = dcos(a);                        // facing (toward the road)
   const pitch = opts.pitch || 2.7, back = opts.back === undefined ? 0.45 : opts.back;
   // round 5: `front` (default on) asks build.js for a modelled front row of figures on the ground in front of the
   // group's card stack (level/crowdrow.js); the stack itself (three card layers 0.3 m back and up) is applied to
@@ -602,7 +606,7 @@ function genMarketAndLowerStreet(rng) {
 
 /** TRACK-PLAN 4.1 base slope without noise, for the contour lines */
 export const baseSlope = (x, z) => 0.2 + 0.055 * Math.max(0, x + 127) + 0.06 * Math.max(0, z + 160);
-const GRAD = [0.055, 0.06], GRADN = Math.hypot(0.055, 0.06);
+const GRAD = [0.055, 0.06], GRADN = dhypot(0.055, 0.06);
 const DOWNHILL = [-GRAD[0] / GRADN, -GRAD[1] / GRADN];
 export const TERRACE_ROT = facing(DOWNHILL[0], DOWNHILL[1]);   // 222.5 degrees: the +Z face points downhill (north west)
 function offTerraceLine(x, z) {
@@ -694,7 +698,7 @@ function genPiazza(rng) {
     const T = trackTable(), G = LANDMARKS.gate;
     for (const pr of [0.505, 0.511, 0.517, 0.523, 0.529]) {
       const s = pr * T.length, r = roadside(s, 1, atDistance(s).width / 2 + 0.6 + 1.4);
-      if (Math.hypot(r.x - G.x, r.z - G.z) < 9 || !clearOf(out, r.x, r.z, 2.5)) continue;
+      if (dhypot(r.x - G.x, r.z - G.z) < 9 || !clearOf(out, r.x, r.z, 2.5)) continue;
       out.push(P('sign_chevron_board', r.x, r.z, r.rotFaceBackToward(CHEVRON_TURN), { tag: 'chevrons_e' }));
     }
     const s = nearest(68, -70).s;
@@ -825,7 +829,7 @@ export function genCliffRocks(edge) {
   let acc = 0, next1 = 4, next2 = 8;
   for (let i = 1; i < edge.length; i++) {
     const a = edge[i - 1], b = edge[i];
-    acc += Math.hypot(b.x - a.x, b.z - a.z);
+    acc += dhypot(b.x - a.x, b.z - a.z);
     if (acc >= next1) {
       next1 += 8;
       out.push(P('rock_cliff_module', b.x + b.nx * 5.2, b.z + b.nz * 5.2, facing(b.nx, b.nz), { tag: 'cliff_rock_upper', y: b.y - 8 }));
@@ -892,13 +896,13 @@ function genLighthouseAndBeach(rng) {
   const T = trackTable();
   const C = LANDMARKS.lighthouse;
   // four guard wall modules on the rock's road side, an arc at radius 22 toward the descent road
-  const th0 = Math.atan2(94 - C.z, -152 - C.x);
+  const th0 = datan2(94 - C.z, -152 - C.x);
   for (const dd of [-16.5, -5.5, 5.5, 16.5]) {
-    const th = th0 + dd / DEG, dx = Math.cos(th), dz = Math.sin(th);
+    const th = th0 + dd / DEG, dx = dcos(th), dz = dsin(th);
     out.push(P('stone_guardwall', C.x + 22 * dx, C.z + 22 * dz, facing(dx, dz), { tag: 'lighthouse_wall' }));
   }
-  for (let i = 0; i < 4; i++) { const th = th0 + Math.PI + (i - 1.5) * 0.7, rr = 9 + 6 * rng(); out.push(P('agave_cluster', C.x + rr * Math.cos(th), C.z + rr * Math.sin(th), rng() * 360, { tag: 'lighthouse_agave' })); }
-  for (let i = 0; i < 4; i++) { const th = th0 + (i - 1.5) * 0.9 + 0.3, rr = 11 + 7 * rng(); out.push(P('rock_boulder', C.x + rr * Math.cos(th), C.z + rr * Math.sin(th), rng() * 360, { tag: 'lighthouse_boulder' })); }
+  for (let i = 0; i < 4; i++) { const th = th0 + Math.PI + (i - 1.5) * 0.7, rr = 9 + 6 * rng(); out.push(P('agave_cluster', C.x + rr * dcos(th), C.z + rr * dsin(th), rng() * 360, { tag: 'lighthouse_agave' })); }
+  for (let i = 0; i < 4; i++) { const th = th0 + (i - 1.5) * 0.9 + 0.3, rr = 11 + 7 * rng(); out.push(P('rock_boulder', C.x + rr * dcos(th), C.z + rr * dsin(th), rng() * 360, { tag: 'lighthouse_boulder' })); }
   for (const p of [0.893, 0.905]) { const r = roadside(p * T.length, 1, atProgress(p).width / 2 + 2.0); out.push(P('race_flag_pole', r.x, r.z, r.rotAlong, { tag: 'flags_i' })); }
   // descent inner (east) side: ten retaining walls following the road, palms above, two pines
   const s0 = T.wpS[51], s1 = T.wpS[56];
